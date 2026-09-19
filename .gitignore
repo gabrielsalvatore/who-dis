@@ -27,3 +27,9 @@ eval/results/*.md
 
 # os
 .DS_Store
+
+# playwright
+/node_modules/
+/package-lock.json
+eval/results/*.png
+eval/audio_fixtures/*.mp3

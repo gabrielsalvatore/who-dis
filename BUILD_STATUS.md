@@ -99,3 +99,45 @@ All three required scenarios verified against the running server:
 - NOT YET VERIFIED: microphone capture, real STT on spoken audio, push-to-talk, browser UI.
 
 ## M1 — frontend (next)
+
+## M1 — frontend + verified spoken loop — COMPLETE (2026-09-19 ~20:10)
+
+Built: Vite + React + TS, no router (pathname switch), no UI component library.
+- `useRecorder.ts` — MIME detection, push-to-talk, 30 s cap, 0.5 s minimum, permission
+  and unsupported-browser handling.
+- `useCall.ts` — turn submission, filler scheduling, time-to-filler vs time-to-response
+  measured separately, plus `useFamilyFeed` (1 s polling, follows `/api/calls/current`).
+- `CallerPanel` / `FamilyPanel` / `ModeBadge`. Side-by-side on `/`, family alone on `/family`.
+- Typecheck clean, production build clean, served single-process by FastAPI from `dist/`.
+
+### Browser E2E with a real microphone path
+`e2e/spoken_turn.mjs` drives headless Chromium with `--use-file-for-fake-audio-capture`,
+fed WAVs of synthesised caller speech (a different ElevenLabs voice from the assistant).
+This exercises getUserMedia → MediaRecorder → upload → **real ElevenLabs STT** → **real
+Nemotron** → policy → cached speech, with the family window open in a second tab.
+
+**Bank impersonation, spoken:** transcribe 816 ms, classify 1290 ms, time-to-filler 251 ms,
+time-to-response 2117 ms. Ended the call, raised the URGENT alert, and the family window
+highlighted exactly `"Read it back to me so I can verify you"`. ✅
+**Routine delivery, spoken:** transcribe 531 ms, classify 2178 ms. No alert, asked a
+neutral follow-up. No false alarm. ✅
+Reset verified: the separately-opened family window picked up the new call by itself.
+
+### Two real frontend defects found by the E2E run and fixed
+- **Async start race.** `getUserMedia` is async, so a quick tap released *before* the mic
+  opened: `stop()` found no recorder, returned, and then the recorder started anyway and
+  kept running. Fixed with a `desiredRef` press/release flag; an aborted start now reports
+  the "too short" hint. This is the accidental-tap case §6 asks for.
+- **`pointerleave` auto-sent the turn.** Drifting the pointer off the button mid-sentence
+  submitted early. Replaced with pointer capture + `pointercancel`.
+
+Verified in-browser: accidental tap discarded with a hint; spacebar ignored while typing;
+filler played then the reply; family window updated on turn completion and after reset.
+Screenshots in `eval/results/`.
+
+### Still unverified
+- A **human** speaking into a **real** microphone, and venue-like background noise.
+  Synthesised speech through a fake device is a weaker test. Gabriel must do this.
+- Safari / Firefox. Only Chromium was exercised.
+
+## M2 — evaluation (next): datasets, keyword baseline, runner, label review
