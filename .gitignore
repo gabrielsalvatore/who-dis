@@ -1,0 +1,29 @@
+# secrets
+.env
+.env.local
+*.key
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+
+# node
+node_modules/
+dist/
+.vite/
+
+# generated audio cache (regenerated from provider)
+backend/app/audio_cache/*.mp3
+backend/app/audio_cache/*.json
+
+# eval output
+eval/results/*.json
+eval/results/*.md
+!eval/results/.gitkeep
+
+# os
+.DS_Store
