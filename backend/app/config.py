@@ -26,6 +26,10 @@ class Settings:
             "NVIDIA_BASE_URL", "https://integrate.api.nvidia.com/v1"
         ).strip().rstrip("/")
         self.nvidia_model: str = os.getenv("NVIDIA_MODEL", "").strip()
+        # Second Nemotron used only when the primary returns a transient capacity
+        # error. The hosted endpoints return 503 "Worker local total request limit
+        # reached" under load, which would otherwise degrade a live demo turn.
+        self.nvidia_model_fallback: str = os.getenv("NVIDIA_MODEL_FALLBACK", "").strip()
 
         self.elevenlabs_api_key: str = os.getenv("ELEVENLABS_API_KEY", "").strip()
         self.elevenlabs_voice_id: str = os.getenv("ELEVENLABS_VOICE_ID", "").strip()

@@ -30,15 +30,20 @@ def main() -> int:
     # --- 1. entitlement / credits (confirms real API billing, not just a UI plan) ---
     print("[1/4] GET /v1/user/subscription ...")
     r = httpx.get(f"{BASE}/v1/user/subscription", headers=headers, timeout=20.0)
-    if r.status_code != 200:
+    if r.status_code == 200:
+        sub = r.json()
+        print(f"  tier       : {sub.get('tier')}")
+        print(f"  characters : {sub.get('character_count')} / "
+              f"{sub.get('character_limit')} used this period")
+        print(f"  status     : {sub.get('status')}")
+    elif r.status_code in (401, 403):
+        # A key scoped without `user_read` still works for STT/TTS. Not fatal:
+        # it only means we cannot read the quota programmatically.
+        print("  SKIPPED: key lacks the 'user_read' permission.")
+        print("  Speech still works; check remaining credits in the ElevenLabs dashboard.")
+    else:
         print(f"  HTTP {r.status_code}: {r.text[:300]}")
         return 1
-    sub = r.json()
-    used = sub.get("character_count")
-    limit = sub.get("character_limit")
-    print(f"  tier       : {sub.get('tier')}")
-    print(f"  characters : {used} / {limit} used this period")
-    print(f"  status     : {sub.get('status')}")
 
     # --- 2. stock voices actually available to THIS account ---
     print("\n[2/4] GET /v1/voices ...")
