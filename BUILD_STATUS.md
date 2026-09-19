@@ -141,3 +141,54 @@ Screenshots in `eval/results/`.
 - Safari / Firefox. Only Chromium was exercised.
 
 ## M2 — evaluation (next): datasets, keyword baseline, runner, label review
+
+## M2 — evaluation harness + dev results — COMPLETE (2026-09-19 ~20:40)
+
+Built: `eval/build_datasets.py` (12 dev + 24 test conversations, 73 prefixes),
+`eval/keyword_baseline.py` (frozen `kw-v1`), `eval/run_eval.py`, `eval/make_review.py`.
+Both systems are fed identical prefixes and run through the **same** policy layer, with
+policy state carried forward across a conversation. No TTS is generated during eval.
+
+### Dev-set results (12 conversations, 24 prefixes, dataset `dcd379a81d1`)
+
+| | Nemotron pipeline | keyword `kw-v1` |
+|---|---|---|
+| system protective recall on scams | **6/6** | 5/6 |
+| benign high-risk false alarms | **0/6** | 1/6 |
+| benign calls incorrectly ended | **0/6** | 1/6 (`dev-08`) |
+| benign sent to review | 1/6 | 2/6 |
+| prefix risk within acceptable set | **24/24** | 21/24 |
+| forbidden-action violations | **0/24** | 1/24 |
+| evidence quotes verified | 26/26 | — |
+| classify latency median / p95 | 2362 ms / 3195 ms | ~0 ms |
+| provider failures | 0 | — |
+
+The baseline's failure is the headline comparison: `kw-v1` **hangs up on `dev-08`**, a bank
+calling to warn the customer never to share a one-time code. It matches the words and
+cannot read who is asking whom to do what.
+
+### Third policy defect found by the dev set, and fixed
+`needs_review` plus a strong verified signal (a wire-transfer demand, an attempt to
+override the screening rules) previously just asked another neutral question, twice, and
+the conversation ended with **no alert ever raised** — `dev-05` and `dev-06` both slipped
+through. Added `SEVERE_SIGNALS`: a verified quote carrying payment / secrecy / manipulation
+/ remote-access / threat / emergency escalates to review immediately, the same way a
+claimed emergency already did. `authority_impersonation` is deliberately excluded — naming
+a bank is not evidence of anything. Four regression tests added; dev recall went 4/6 → 6/6
+with benign false alarms still 0/6.
+
+38 backend tests passing.
+
+### Docs written
+`README.md` (replaced), `docs/DEMO.md`, `docs/SUBMISSION.md` (survey left blank, as required).
+
+## M3 — BLOCKED on Gabriel: test-set label review
+
+`eval/test_review.md` generated: 24 conversations, 49 prefixes, dataset hash `d4f1cac323d`,
+`frozen: false`. Per the build spec the test set must be reviewed by Gabriel before it is
+frozen, and the classifier prompt must not be tuned against it beforehand.
+
+- Prompt has been at `p7ddae94c` since before the test set was written. Tuning to date used
+  only ad-hoc examples and the dev split.
+- Review status: **PENDING** — awaiting Gabriel. Labels changed so far: 0.
+- Nothing from the test set has been run.

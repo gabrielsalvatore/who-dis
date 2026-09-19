@@ -74,6 +74,17 @@ CACHEABLE_PHRASES: dict[str, str] = {
 
 MAX_FOLLOWUPS = 2
 
+# Signals that warrant telling a person now rather than after two more polite
+# questions. Measured on the dev set: without this, a caller who demands a wire
+# transfer or tries to override the screening rules simply gets asked what the
+# call is about, twice, and the family is never told. Deliberately excludes
+# authority_impersonation - naming a bank is not evidence of anything.
+SEVERE_SIGNALS = re.compile(
+    r"payment|secrecy|manipulation|injection|remote_access|threat|coercion|"
+    r"gift_card|wire|extortion|impersonation_of_family|emergency",
+    re.IGNORECASE,
+)
+
 # Published, frozen lexical guard for the end-call policy. A verified quote must
 # actually mention a credential before CallKind will hang up on it. This exists
 # so that `credential_request=True` with an unrelated supporting quote downgrades
@@ -111,6 +122,17 @@ class CallState:
         if question_id and question_id in QUESTION_BANK and question_id not in self.asked_questions:
             return question_id
         return None
+
+
+def has_severe_signal(assessment: Assessment) -> bool:
+    """True when the transcript already justifies involving a person.
+
+    Requires the model to have flagged a credential request, or a *verified*
+    quote carrying a severe signal. An unverified quote never counts.
+    """
+    if assessment.credential_request:
+        return True
+    return any(SEVERE_SIGNALS.search(ev.signal) for ev in assessment.verified_evidence)
 
 
 def supporting_credential_quote(assessment: Assessment) -> Evidence | None:
@@ -246,8 +268,24 @@ def decide(
             ends_call=True,
         ), None
 
-    # 6. Needs review: a couple of neutral follow-ups, then escalate or take a message.
+    # 6. Needs review.
     if assessment.risk == "needs_review":
+        # Something concrete and concerning is already on the record: tell a
+        # person now instead of asking another polite question.
+        if has_severe_signal(assessment):
+            decision = PolicyDecision(
+                action="request_family_review",
+                assistant_text=REVIEW_GENERAL,
+                reason="The caller has made a request that needs a person to look at it. "
+                       "CallKind will not act on it.",
+                ends_call=False,
+                alert_level="review",
+            )
+            return decision, _dedupe(state, _alert(
+                "review", "Please review this call",
+                assessment, "request_family_review", caller_turn_id,
+            ))
+
         question_id = state.next_question(assessment.question_id)
         if state.followups_asked < MAX_FOLLOWUPS and question_id:
             return PolicyDecision(
