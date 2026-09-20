@@ -92,6 +92,30 @@ the caller is *verified*, only that nothing alarming was said."
 Urgent alert, **call not ended**. "It won't hang up on what might be a real emergency, and
 it won't authenticate him either. It hands it to a person."
 
+**4c. The real bank, and what grep would have done (25s).** This is the answer to "why do
+you need a language model for this", so use it whenever a judge asks. Under the last turn
+there is a strip comparing CallKind with `kw-v1`, the frozen keyword baseline from the
+evaluation, run on the same words. Hold spacebar:
+
+> "Hello, this is the fraud prevention team at Brightwater Bank."
+
+Then hold again:
+
+> "I am calling to remind you that we will never ask you to read out a one time code.
+> Never give it to anyone who rings you."
+
+Read the strip out loud. CallKind keeps the call alive. `kw-v1` shows **Ended the call**,
+on the words *one time code*.
+
+Say: *"That is a real bank warning a customer not to get scammed, and keyword matching
+hangs up on it. It matched the words. It cannot tell who is asking whom to do what. That
+is the whole argument for the model, and it is the same baseline and the same case as
+`dev-08` in our evaluation."*
+
+The strip is a comparison and nothing else. If a judge asks: the baseline runs in a
+separate request after the answer is already on screen, over its own policy state, and
+CallKind never reads it. There is a test that fails if the decision path can even see it.
+
 **4b. Screening override attempt (15s), optional.** Use this one if a judge asks whether a
 caller can talk the assistant out of screening. Hold spacebar:
 

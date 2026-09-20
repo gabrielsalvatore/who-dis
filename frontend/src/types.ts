@@ -116,6 +116,21 @@ export const RISK_LABEL: Record<Risk, string> = {
   high_risk: 'High risk',
 }
 
+export interface BaselineTurn {
+  turn_id: string
+  risk: Risk
+  action: Action
+  ends_call: boolean
+  alert_level: string | null
+  matched: string[]
+}
+
+export interface BaselineComparison {
+  baseline_version: string
+  ended_at_turn_id: string | null
+  turns: BaselineTurn[]
+}
+
 export const ACTION_LABEL: Record<Action, string> = {
   continue: 'Asked a follow-up question',
   take_message: 'Took a message',

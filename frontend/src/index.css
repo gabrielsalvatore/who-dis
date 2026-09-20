@@ -144,6 +144,33 @@ kbd {
 .fallback-controls summary { cursor: pointer; font-size: .85rem; color: var(--ink-faint); }
 .fallback-controls .row { margin-top: 10px; }
 
+/* ---------- keyword baseline comparison ----------
+   Has to be legible from a judge's side of the table: two verdicts, big, in
+   words, colour only as reinforcement. */
+.baseline {
+  margin: 0 0 18px; padding: 14px 16px;
+  background: var(--paper); border: 1px solid var(--line); border-radius: 8px;
+}
+.baseline-differs { border-left: 4px solid var(--accent); }
+.baseline-caption { margin: 0 0 12px; font-size: .8rem; color: var(--ink-faint); }
+.baseline-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 20px; }
+.baseline-grid > div { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.baseline-grid > div + div { border-left: 1px solid var(--line); padding-left: 20px; }
+.baseline-who { font-size: .8rem; color: var(--ink-faint); }
+.baseline-verdict { font-size: 1.28rem; font-weight: 700; line-height: 1.2; letter-spacing: -.01em; }
+.v-calm { color: var(--calm); }
+.v-review { color: var(--review); }
+.v-urgent { color: var(--urgent); }
+.baseline-matched { margin-top: 2px; font-size: .78rem; color: var(--ink-soft); word-break: break-word; }
+.baseline-note { margin: 12px 0 0; font-size: .9rem; font-weight: 600; color: var(--ink-soft); }
+@media (max-width: 560px) {
+  .baseline-grid { grid-template-columns: 1fr; }
+  .baseline-grid > div + div {
+    border-left: 0; padding-left: 0;
+    border-top: 1px solid var(--line); padding-top: 12px;
+  }
+}
+
 /* ---------- typed fallback ---------- */
 .typed-fallback { margin-bottom: 16px; }
 .typed-fallback label { display: block; font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-faint); margin-bottom: 6px; }

@@ -1,4 +1,4 @@
-import type { CallView, Health, TurnResult } from './types'
+import type { BaselineComparison, CallView, Health, TurnResult } from './types'
 
 async function json<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -56,3 +56,8 @@ export const retryAudio = (callId: string, turnId: string) =>
   fetch(`/api/calls/${callId}/audio/${turnId}/retry`, { method: 'POST' }).then(
     json<{ audio_url: string; cached: boolean }>,
   )
+
+// The frozen keyword baseline, replayed over the same transcript. Fetched only
+// after a turn has been answered so it can never be on the critical path.
+export const getBaseline = (callId: string) =>
+  fetch(`/api/calls/${callId}/baseline`).then(json<BaselineComparison>)

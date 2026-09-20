@@ -18,7 +18,7 @@ from fastapi import FastAPI, File, Form, HTTPException, Request, Response, Uploa
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
-from . import classifier, fixtures, providers
+from . import baseline, classifier, fixtures, providers
 from .masking import mask_call_view, mask_turn_result
 from .config import get_settings
 from .policy import CACHEABLE_PHRASES, CallState, advance_state, decide
@@ -192,6 +192,23 @@ async def current_call() -> dict:
         "version": session.version,
         "mode": session.mode,
     }
+
+
+@app.get("/api/calls/{call_id}/baseline")
+async def baseline_comparison(call_id: str) -> dict:
+    """What the frozen keyword baseline would have done with the same transcript.
+
+    Fetched by the UI *after* the real turn has been answered, so it cannot slow
+    a response down, and computed over its own policy state, so it cannot reach
+    the live call. It is labelled in the UI as a comparison; CallKind never acts
+    on it.
+    """
+    session = store.get(call_id)
+    if session is None:
+        raise HTTPException(404, "call not found")
+    if not baseline.available():
+        raise HTTPException(404, "keyword baseline is not available in this deployment")
+    return baseline.compare(session.turns)
 
 
 @app.get("/api/calls/{call_id}", response_model=CallView)
