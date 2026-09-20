@@ -116,17 +116,6 @@ that quote actually naming a credential. A confident wrong label cannot hang up 
 This is why `docs/EVALUATION.md` reports two recall numbers. Model `high_risk` label recall
 and system protective recall differ, and the gap is the point, not an embarrassment.
 
-## Attendee survey (to be filled in by Gabriel, not by Claude Code)
-
-Time-boxed to 30 minutes, only after the vertical slice works. Two questions, raw counts
-only, no extrapolation to market size, willingness to pay, or real-world demand.
-
-- Date: ____________  Setting: SteelHacks XIII attendees  Sample size: n = ____
-- "Has an older relative or someone you know been targeted by a phone scam?" — ____ of ____ said yes
-- "Would you set something like this up for them?" — ____ of ____ said yes
-
-*Leave blank if the survey was not run.*
-
 ## Disclosures and eligibility
 
 - [ ] Confirm current submission requirements with organisers.

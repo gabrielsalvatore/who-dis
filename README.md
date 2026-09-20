@@ -155,6 +155,10 @@ script and [docs/BUILD_SPEC.md](docs/BUILD_SPEC.md) for the original build speci
 - Numbers that look like codes, PINs or account details are masked in API responses, the
   family view and anything written to disk. Quote validation still runs on the raw
   in-memory transcript, so masking cannot weaken the evidence check.
+- **Consent.** The first thing a caller hears is that they are speaking to a call screening
+  assistant answering for the household, so nobody is recorded without being told. Recording
+  and two-party consent law is not otherwise addressed here, and a production version in a
+  two-party consent state would need more than a spoken notice.
 
 ## Team
 

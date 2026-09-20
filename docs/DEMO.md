@@ -139,9 +139,11 @@ screening off became the evidence that something was wrong with the call."*
   who's calling. But it hands the transcript back to the person scammers are targeting and
   asks them to decide. CallKind makes that call for them, and brings in the family with the
   evidence."*
-- The measured finding, in one line: *"The model's own risk label was right 5 times out of
-  6 on our dev set. We don't trust it anyway — the only thing that can end a call is a quote
-  we re-checked against the transcript."*
+- The measured finding, in one line: *"We ran the same dev set three times. The model's own
+  risk label got 2 out of 6, then 5 out of 6, then 3 out of 6. The system protected the
+  caller 6 out of 6 every single time. The label moves, the system doesn't, and that's
+  because the only thing that can end a call is a quote we re-checked against the
+  transcript."*
 - The measured numbers from `docs/EVALUATION.md` — with denominators, out loud.
 - One limitation. Suggested: *"This is a browser prototype, not a phone integration, and
   every scenario is synthetic. We can't claim a real-world prevention rate."*

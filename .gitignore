@@ -23,6 +23,8 @@ backend/app/audio_cache/*.json
 # eval output
 eval/results/*.json
 !eval/results/endpoint_sweep.json
+# published dev runs: the evidence behind docs/EVALUATION.md
+!eval/results/dev_both_*.json
 eval/results/*.md
 !eval/results/.gitkeep
 
@@ -35,3 +37,6 @@ eval/results/*.md
 eval/results/*.png
 eval/audio_fixtures/*.mp3
 eval/results/*.mp3
+
+# scratch staging, never committed
+copy-paste.md
