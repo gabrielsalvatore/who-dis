@@ -165,7 +165,7 @@ script and [docs/BUILD_SPEC.md](docs/BUILD_SPEC.md) for the original build speci
 Built at SteelHacks XIII by two Allegheny College undergraduates.
 
 - **Gabriel Salvatore** - senior, Computer Science and Economics.
-  Email: GABRIEL_EMAIL_TODO
+  Email: xaviersaccoccio01@allegheny.edu
 - **Miguel Orti Vila** - junior, Computer Science and Engineering Physics, minors in
   Mathematics and Economics. Email: miguelorti05@gmail.com
 
