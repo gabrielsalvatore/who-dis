@@ -14,12 +14,21 @@ async function json<T>(res: Response): Promise<T> {
 
 export const getHealth = () => fetch('/api/health').then(json<Health>)
 
-export const createCall = () =>
+export const createCall = (replayScenario?: string) =>
   fetch('/api/calls', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: '{}',
+    body: JSON.stringify(replayScenario ? { replay_scenario: replayScenario } : {}),
   }).then(json<CallView>)
+
+export interface ReplayMeta {
+  recorded_at: string | null
+  recorded_model: string | null
+  recorded_prompt_version: string | null
+  scenarios: string[]
+}
+
+export const getReplays = () => fetch('/api/replays').then(json<ReplayMeta>)
 
 export const getCall = (id: string) => fetch(`/api/calls/${id}`).then(json<CallView>)
 

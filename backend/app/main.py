@@ -17,13 +17,16 @@ from fastapi import FastAPI, File, Form, HTTPException, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
-from . import classifier, providers
+from . import classifier, fixtures, providers
 from .config import get_settings
 from .policy import CACHEABLE_PHRASES, CallState, advance_state, decide
 from .schemas import (
+    Alert,
+    Assessment,
     CallView,
     HealthResponse,
     Mode,
+    PolicyDecision,
     StageTimings,
     Turn,
     TurnResult,
@@ -117,11 +120,39 @@ async def warm_cache() -> dict:
 # --------------------------------------------------------------------------
 @app.post("/api/calls", response_model=CallView)
 async def create_call(payload: Optional[dict] = None) -> CallView:
+    """Create a call. Pass `replay_scenario` to deliberately enter offline replay.
+
+    Replay is never entered implicitly: a provider failure degrades to review, it
+    does not quietly start playing a recording.
+    """
     payload = payload or {}
-    mode: Mode = "fixture_replay" if get_settings().app_mode == "fixture" else "live_api"
-    session = store.create(mode=mode, scenario_label=payload.get("scenario_label"))
-    logger.info("call created %s mode=%s", session.call_id, mode)
+    settings = get_settings()
+    replay_scenario = payload.get("replay_scenario")
+
+    if replay_scenario or settings.app_mode == "fixture":
+        replay_scenario = replay_scenario or (fixtures.available_scenarios() or [None])[0]
+        if replay_scenario not in fixtures.available_scenarios():
+            raise HTTPException(
+                400,
+                f"no recorded replay named {replay_scenario!r}; "
+                f"available: {fixtures.available_scenarios()}",
+            )
+        session = store.create(mode="fixture_replay",
+                               scenario_label=replay_scenario,
+                               replay_scenario=replay_scenario)
+        logger.info("call created %s mode=fixture_replay scenario=%s",
+                    session.call_id, replay_scenario)
+        return session.to_view()
+
+    session = store.create(mode="live_api", scenario_label=payload.get("scenario_label"))
+    logger.info("call created %s mode=live_api", session.call_id)
     return session.to_view()
+
+
+@app.get("/api/replays")
+async def list_replays() -> dict:
+    """What offline replays exist, and when they were recorded."""
+    return fixtures.metadata()
 
 
 @app.get("/api/calls/current")
@@ -200,6 +231,14 @@ async def submit_turn(
 
         timings = StageTimings()
         turn_mode: Mode = session.mode
+
+        # --- 0. offline replay: no providers, no inference ----------------
+        if session.replay_scenario is not None:
+            result = _replay_turn(session, request_id)
+            timings.total_ms = (time.perf_counter() - t_start) * 1000
+            result.timings = timings
+            session.cache_result(request_id, result)
+            return result
 
         # --- 1. get the caller's words -----------------------------------
         if audio_bytes:
@@ -292,6 +331,48 @@ async def submit_turn(
             round(timings.classify_ms or 0), round(timings.total_ms or 0),
         )
         return result
+
+
+def _replay_turn(session, request_id: str) -> TurnResult:
+    """Advance one step through a recorded scenario. Never calls a provider."""
+    step = fixtures.step(session.replay_scenario or "", session.replay_index)
+    if step is None:
+        raise HTTPException(409, "this replay has no further recorded turns")
+    session.replay_index += 1
+
+    assessment = Assessment(**step["assessment"])
+    decision = PolicyDecision(**step["decision"])
+    alert = Alert(**step["alert"]) if step.get("alert") else None
+
+    caller_turn = session.add_turn(
+        Turn(turn_id=session.next_caller_turn_id(), role="caller",
+             text=step["caller_text"], source="fixture")
+    )
+    assistant_turn = session.add_turn(
+        Turn(turn_id=session.next_assistant_turn_id(), role="assistant",
+             text=decision.assistant_text, source="fixture")
+    )
+    session.record(assessment, decision, StageTimings(), alert)
+
+    audio_url = None
+    cache = _phrase_cache()
+    if cache.get(decision.assistant_text) is not None:
+        session.audio[assistant_turn.turn_id] = cache.get(decision.assistant_text)  # type: ignore[arg-type]
+        audio_url = f"/api/calls/{session.call_id}/audio/{assistant_turn.turn_id}"
+
+    return TurnResult(
+        call_id=session.call_id,
+        turn_id=caller_turn.turn_id,
+        caller_text=step["caller_text"],
+        assistant_text=decision.assistant_text,
+        assessment=assessment,
+        decision=decision,
+        alert=alert,
+        call_status=session.status,
+        mode="fixture_replay",
+        audio_url=audio_url,
+        audio_cached=audio_url is not None,
+    )
 
 
 # --------------------------------------------------------------------------

@@ -63,11 +63,11 @@ export function useCall() {
     })
   }, [])
 
-  const startCall = useCallback(async () => {
+  const startCall = useCallback(async (replayScenario?: string) => {
     setError(null)
     stopAudio()
     try {
-      const view = await api.createCall()
+      const view = await api.createCall(replayScenario)
       setCall(view)
       setLastResult(null)
       setTiming(null)
@@ -78,14 +78,14 @@ export function useCall() {
     }
   }, [stopAudio])
 
-  const reset = useCallback(async () => {
+  const reset = useCallback(async (replayScenario?: string) => {
     stopAudio()
     if (call) await api.deleteCall(call.call_id).catch(() => undefined)
     setCall(null)
     setLastResult(null)
     setTiming(null)
     setError(null)
-    return startCall()
+    return startCall(replayScenario)
   }, [call, startCall, stopAudio])
 
   const refresh = useCallback(async () => {

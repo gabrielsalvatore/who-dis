@@ -192,3 +192,29 @@ frozen, and the classifier prompt must not be tuned against it beforehand.
   only ad-hoc examples and the dev split.
 - Review status: **PENDING** — awaiting Gabriel. Labels changed so far: 0.
 - Nothing from the test set has been run.
+
+## M3a — offline replay + report generator — COMPLETE (2026-09-20 ~00:10)
+
+- `eval/record_replay.py` recorded **real** live runs of all three demo scenarios to
+  `backend/app/fixtures/replay.json`, carrying the model id, prompt version and timestamp.
+  The replay is a recording of genuine inference, never invented output.
+- `backend/app/fixtures.py` + `/api/replays`. Replay is entered **only** on explicit
+  request (`POST /api/calls {"replay_scenario": ...}`) or `APP_MODE=fixture`. There is no
+  code path from a provider failure into replay — a failure degrades to review. Two tests
+  assert this.
+- UI: collapsed "Offline replay — no live inference" control listing the recorded
+  scenarios, showing when they were captured. Both panels show the **Fixture replay** mode
+  badge; verified in-browser (`e2e/replay_check.mjs`) that typed input is ignored during
+  replay and the badge reads correctly in the caller *and* family panels.
+- `eval/make_report.py` generates `docs/EVALUATION.md` straight from the results JSON, so
+  no number in the write-up is hand-copied.
+
+42 backend tests passing.
+
+### Gabriel's label-review decisions (2026-09-20)
+Asked about the two genuine judgement calls in the draft test labels:
+- test-04 / test-12 (family emergency, romance): confirmed `end_simulated_call` stays
+  **forbidden** — alert the family, never hang up on a possible real emergency.
+- test-21 (no-pressure charity call): confirmed calm *or* review both acceptable.
+**Labels changed: 0.** Full 24-conversation review still outstanding; test set remains
+`frozen: false` and has NOT been run.

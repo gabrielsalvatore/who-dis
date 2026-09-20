@@ -52,6 +52,10 @@ class CallSession:
     state: CallState = field(default_factory=CallState)
     version: int = 0
 
+    # Offline replay position. Only set for explicitly requested fixture calls.
+    replay_scenario: Optional[str] = None
+    replay_index: int = 0
+
     # assistant turn id -> mp3 bytes for that specific spoken response
     audio: dict[str, bytes] = field(default_factory=dict)
 
@@ -133,11 +137,17 @@ class SessionStore:
         self._sessions: "OrderedDict[str, CallSession]" = OrderedDict()
         self._current_id: Optional[str] = None
 
-    def create(self, mode: Mode = "live_api", scenario_label: Optional[str] = None) -> CallSession:
+    def create(
+        self,
+        mode: Mode = "live_api",
+        scenario_label: Optional[str] = None,
+        replay_scenario: Optional[str] = None,
+    ) -> CallSession:
         session = CallSession(
             call_id=f"call-{uuid.uuid4().hex[:8]}",
             mode=mode,
             scenario_label=scenario_label,
+            replay_scenario=replay_scenario,
         )
         session.add_turn(
             Turn(

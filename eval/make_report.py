@@ -1,0 +1,153 @@
+"""Generates docs/EVALUATION.md from the newest result file per split.
+
+Numbers are read from eval/results/*.json, never typed by hand.
+  .venv/bin/python eval/make_report.py
+"""
+from __future__ import annotations
+
+import glob
+import json
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+PROTECTIVE = {"end_simulated_call", "request_family_review"}
+
+
+def latest(split: str) -> dict | None:
+    files = sorted(glob.glob(str(ROOT / "eval" / "results" / f"{split}_*.json")))
+    best = None
+    for f in files:
+        d = json.load(open(f))
+        # prefer a run containing both systems, else the newest
+        if best is None or len(d["systems"]) >= len(best["systems"]):
+            best = d
+    return best
+
+
+def table(run: dict) -> list[str]:
+    sysnames = list(run["systems"])
+    rows = [
+        ("System protective recall on scams", lambda m: m["scam_detection"]["system_protective_recall"]),
+        ("Model `high_risk` label recall", lambda m: m["scam_detection"]["model_high_risk_recall"]),
+        ("Benign high-risk false alarms", lambda m: m["benign_errors"]["high_risk_false_alarms"]),
+        ("Benign calls incorrectly ended", lambda m: m["benign_errors"]["incorrectly_terminated"]),
+        ("Benign calls sent to review", lambda m: m["benign_errors"]["sent_to_review"]),
+        ("Benign handled without review", lambda m: m["benign_errors"]["handled_without_review"]),
+        ("Prefix risk within acceptable set", lambda m: m["label_agreement"]["prefix_risk_within_acceptable_set"]),
+        ("Forbidden-action violations", lambda m: m["label_agreement"]["forbidden_action_violations"]),
+        ("Evidence quotes verified", lambda m: m["evidence_grounding"]["quotes_verified_against_transcript"]),
+        ("Classify latency median", lambda m: f'{m["latency_ms"]["median"]} ms'),
+        ("Classify latency p95", lambda m: f'{m["latency_ms"]["p95"]} ms'),
+        ("Latency sample size", lambda m: m["latency_ms"]["n"]),
+        ("Provider failures", lambda m: m["latency_ms"]["provider_failures"]),
+    ]
+    out = ["| Metric | " + " | ".join(run["systems"][s]["label"] for s in sysnames) + " |",
+           "|---|" + "---|" * len(sysnames)]
+    for name, fn in rows:
+        vals = []
+        for s in sysnames:
+            try:
+                vals.append(str(fn(run["systems"][s]["metrics"])))
+            except Exception:
+                vals.append("N/A")
+        out.append(f"| {name} | " + " | ".join(vals) + " |")
+    return out
+
+
+def failures(run: dict, system: str, limit: int = 2) -> list[str]:
+    data = run["systems"].get(system)
+    if not data:
+        return []
+    out: list[str] = []
+    for r in data["rows"]:
+        if len(out) >= limit * 6:
+            break
+        if r["forbidden_violation"]:
+            out += [
+                f"**{r['conv_id']} ({r['scenario'].replace('_', ' ')}) — {system} took a forbidden action.**",
+                "",
+                f"> Caller: \"{r['caller_text']}\"",
+                "",
+                f"Model said `{r['risk']}`; policy chose `{r['action']}`. "
+                f"Expected any of {r['acceptable_risk']}, and `{r['action']}` was forbidden here.",
+                "",
+            ]
+    return out
+
+
+lines = [
+    "# Evaluation",
+    "",
+    "Synthetic scenarios only. Nothing here supports a claim about real-world prevention",
+    "accuracy. Both systems see identical transcript prefixes, neither ever sees a future",
+    "turn, and both are run through the **same** policy layer, so what is compared is the",
+    "whole system rather than a lone classifier. No TTS is generated during evaluation.",
+    "",
+    "## How to read the two recall numbers",
+    "",
+    "**Model `high_risk` label recall** is how often Nemotron picked the word `high_risk`.",
+    "**System protective recall** is how often CallKind actually did something protective —",
+    "ended the call or raised a review alert. The second is the one that matters, and the",
+    "gap between them is the whole architectural point: the backend acts on *verified",
+    "evidence*, not on the model's choice of label. On a direct one-time-code request the",
+    "model frequently says `needs_review`, yet the system still ends the call, because",
+    "`credential_request` plus a re-verified quote is what the policy keys on.",
+    "",
+]
+
+for split, heading in (("dev", "Development set"), ("test", "Held-out test set")):
+    run = latest(split)
+    lines += [f"## {heading}", ""]
+    if run is None:
+        lines += ["*Not yet run.*", ""]
+        continue
+    if split == "dev":
+        frozen = "tuning split — freezing does not apply"
+    else:
+        frozen = "frozen" if run.get("dataset_frozen") else "**NOT FROZEN — provisional**"
+    lines += [
+        f"`{run['conversations']}` conversations · `{run['prefixes']}` prefixes · "
+        f"dataset `{run['dataset_hash']}` ({frozen}) · run `{run['run_at']}`",
+        "",
+    ] + table(run) + [""]
+
+    nem = run["systems"].get("nemotron")
+    if nem:
+        m = nem["metrics"]
+        lines += [
+            f"Scams missed entirely: `{m['scam_detection']['missed_entirely']}`. "
+            f"First protective turn among detected scams (mean): "
+            f"`{m['scam_detection']['first_protective_turn_mean']}` — "
+            f"{m['scam_detection']['note']}",
+            "",
+        ]
+    for system in run["systems"]:
+        f = failures(run, system)
+        if f:
+            lines += [f"### Failure cases — {system}", ""] + f
+
+lines += [
+    "## The keyword baseline",
+    "",
+    "`eval/keyword_baseline.py`, version `kw-v1`, frozen 2026-09-19. Rules are published in",
+    "full in that file and were not tuned against results. It matches credential, payment,",
+    "urgency, secrecy and authority vocabulary in the caller's words.",
+    "",
+    "Its instructive failure is `dev-08`: a bank calling to warn a customer *never* to read",
+    "out a one-time code. The baseline matches the words `one time code`, calls it",
+    "`high_risk`, and **hangs up on the warning**. It cannot tell who is asking whom to do",
+    "what. That single case is the clearest argument for using a language model here at all.",
+    "",
+    "## What is not measured",
+    "",
+    "- Real callers, real microphones, real rooms. Spoken checks used synthesised speech",
+    "  through a fake capture device plus a small number of manual runs.",
+    "- Any browser other than Chromium.",
+    "- Anything about real-world scam prevalence, prevention or financial loss.",
+    "- Fixture replay is a recording of earlier real inference and is excluded from every",
+    "  number above.",
+    "",
+]
+
+(ROOT / "docs" / "EVALUATION.md").write_text("\n".join(lines) + "\n")
+print("wrote docs/EVALUATION.md")

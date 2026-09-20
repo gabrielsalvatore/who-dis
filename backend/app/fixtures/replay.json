@@ -1,0 +1,258 @@
+{
+  "recorded_at": "2026-09-20T00:00:51.447894+00:00",
+  "model_id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+  "prompt_version": "p7ddae94c",
+  "note": "Recording of real inference. Replayed offline it is NOT live inference and is always labelled Fixture replay.",
+  "scenarios": {
+    "bank_impersonation": [
+      {
+        "caller_text": "Hello, this is Dan calling from the fraud team at Northbridge Bank.",
+        "assistant_text": "Which organisation are you calling from?",
+        "assessment": {
+          "risk": "needs_review",
+          "scam_type": "unknown",
+          "emergency_claimed": false,
+          "credential_request": false,
+          "evidence": [
+            {
+              "turn_id": "caller-1",
+              "quote": "this is Dan calling from the fraud team at Northbridge Bank",
+              "signal": "authority_impersonation",
+              "verified": true
+            }
+          ],
+          "summary": "Caller claims to be from the fraud team at Northbridge Bank.",
+          "question_id": "ask_organisation",
+          "status": "ok",
+          "degraded_reason": null,
+          "model_id": "nvidia/nemotron-3.5-lightning-30b-a3b",
+          "prompt_version": "p7ddae94c",
+          "latency_ms": 2531.6745829986758,
+          "used_fallback_model": true
+        },
+        "decision": {
+          "action": "continue",
+          "assistant_text": "Which organisation are you calling from?",
+          "reason": "Unclear so far; asking a neutral follow-up (1 of 2).",
+          "ends_call": false,
+          "alert_level": null
+        },
+        "alert": null,
+        "call_status": "active"
+      },
+      {
+        "caller_text": "We've blocked a suspicious charge on the account. I'm sending a six digit code to your phone right now - read it back to me so I can verify you.",
+        "assistant_text": "I'm not able to share verification codes, PINs or passwords, and neither is anyone here. I'm ending this call now and flagging it for the family to review.",
+        "assessment": {
+          "risk": "needs_review",
+          "scam_type": "bank_impersonation",
+          "emergency_claimed": false,
+          "credential_request": true,
+          "evidence": [
+            {
+              "turn_id": "caller-2",
+              "quote": "We've blocked a suspicious charge on the account. I'm sending a six digit code to your phone right now - read it back to me so I can verify you.",
+              "signal": "otp_request",
+              "verified": true
+            }
+          ],
+          "summary": "The caller claims to be from Northbridge Bank's fraud team and asks the listener to read back a six-digit code sent to their phone.",
+          "question_id": "ask_organisation",
+          "status": "ok",
+          "degraded_reason": null,
+          "model_id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+          "prompt_version": "p7ddae94c",
+          "latency_ms": 3635.064957998111,
+          "used_fallback_model": false
+        },
+        "decision": {
+          "action": "end_simulated_call",
+          "assistant_text": "I'm not able to share verification codes, PINs or passwords, and neither is anyone here. I'm ending this call now and flagging it for the family to review.",
+          "reason": "Caller directly requested a credential: \"We've blocked a suspicious charge on the account. I'm sending a six digit code to your phone right now - read it back to me so I can verify you.\" (caller-2). Verified against the transcript.",
+          "ends_call": true,
+          "alert_level": "urgent"
+        },
+        "alert": {
+          "alert_id": "alert-80a9607b",
+          "level": "urgent",
+          "headline": "Call ended: caller asked for a security code",
+          "summary": "The caller claims to be from Northbridge Bank's fraud team and asks the listener to read back a six-digit code sent to their phone.",
+          "evidence": [
+            {
+              "turn_id": "caller-2",
+              "quote": "We've blocked a suspicious charge on the account. I'm sending a six digit code to your phone right now - read it back to me so I can verify you.",
+              "signal": "otp_request",
+              "verified": true
+            }
+          ],
+          "caller_turn_id": "caller-2",
+          "created_at": 1789862438.305526,
+          "model_risk": "needs_review",
+          "policy_action": "end_simulated_call"
+        },
+        "call_status": "ended"
+      }
+    ],
+    "routine_delivery": [
+      {
+        "caller_text": "Hi there, it's Marcus from Lakeside Parcel.",
+        "assistant_text": "May I ask what the call is about?",
+        "assessment": {
+          "risk": "no_warning_signs",
+          "scam_type": "unknown",
+          "emergency_claimed": false,
+          "credential_request": false,
+          "evidence": [
+            {
+              "turn_id": "caller-1",
+              "quote": "Hi there, it's Marcus from Lakeside Parcel.",
+              "signal": "delivery_pretext",
+              "verified": true
+            }
+          ],
+          "summary": "Caller identifies as a parcel delivery service representative.",
+          "question_id": "ask_purpose",
+          "status": "ok",
+          "degraded_reason": null,
+          "model_id": "nvidia/nemotron-3.5-lightning-30b-a3b",
+          "prompt_version": "p7ddae94c",
+          "latency_ms": 2157.3802499988233,
+          "used_fallback_model": true
+        },
+        "decision": {
+          "action": "continue",
+          "assistant_text": "May I ask what the call is about?",
+          "reason": "No warning signs detected; identity unverified. Asking the caller's purpose before taking a message.",
+          "ends_call": false,
+          "alert_level": null
+        },
+        "alert": null,
+        "call_status": "active"
+      },
+      {
+        "caller_text": "I've got a package that needs a signature, I'll try again tomorrow between nine and eleven.",
+        "assistant_text": "I can take a message and pass it on. Please say what you'd like me to tell them.",
+        "assessment": {
+          "risk": "no_warning_signs",
+          "scam_type": "unknown",
+          "emergency_claimed": false,
+          "credential_request": false,
+          "evidence": [
+            {
+              "turn_id": "caller-1",
+              "quote": "Hi there, it's Marcus from Lakeside Parcel.",
+              "signal": "authority_impersonation",
+              "verified": true
+            }
+          ],
+          "summary": "Marcus from Lakeside Parcel claims a package needs a signature and will try again tomorrow.",
+          "question_id": "ask_message",
+          "status": "ok",
+          "degraded_reason": null,
+          "model_id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+          "prompt_version": "p7ddae94c",
+          "latency_ms": 3088.040499998897,
+          "used_fallback_model": false
+        },
+        "decision": {
+          "action": "take_message",
+          "assistant_text": "I can take a message and pass it on. Please say what you'd like me to tell them.",
+          "reason": "No warning signs detected; identity unverified. Offering to take a message.",
+          "ends_call": false,
+          "alert_level": null
+        },
+        "alert": null,
+        "call_status": "active"
+      }
+    ],
+    "family_emergency": [
+      {
+        "caller_text": "Grandma, it's me, it's Tom. I'm in real trouble.",
+        "assistant_text": "I can't confirm who you are, and I'm not able to act on an urgent request for money. I'm flagging this call for the family to review right away.",
+        "assessment": {
+          "risk": "needs_review",
+          "scam_type": "unknown",
+          "emergency_claimed": true,
+          "credential_request": false,
+          "evidence": [
+            {
+              "turn_id": "caller-1",
+              "quote": "I'm in real trouble",
+              "signal": "emergency_claim",
+              "verified": true
+            }
+          ],
+          "summary": "Tom claims to be in real trouble and calls himself Grandma.",
+          "question_id": "ask_purpose",
+          "status": "ok",
+          "degraded_reason": null,
+          "model_id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+          "prompt_version": "p7ddae94c",
+          "latency_ms": 2400.155082999845,
+          "used_fallback_model": false
+        },
+        "decision": {
+          "action": "request_family_review",
+          "assistant_text": "I can't confirm who you are, and I'm not able to act on an urgent request for money. I'm flagging this call for the family to review right away.",
+          "reason": "Caller claimed an urgent emergency. CallKind cannot verify who is calling, so a person is asked to review it immediately.",
+          "ends_call": false,
+          "alert_level": "urgent"
+        },
+        "alert": {
+          "alert_id": "alert-63178928",
+          "level": "urgent",
+          "headline": "Urgent: caller claims a family emergency",
+          "summary": "Tom claims to be in real trouble and calls himself Grandma.",
+          "evidence": [
+            {
+              "turn_id": "caller-1",
+              "quote": "I'm in real trouble",
+              "signal": "emergency_claim",
+              "verified": true
+            }
+          ],
+          "caller_turn_id": "caller-1",
+          "created_at": 1789862446.845911,
+          "model_risk": "needs_review",
+          "policy_action": "request_family_review"
+        },
+        "call_status": "active"
+      },
+      {
+        "caller_text": "I had an accident and I'm at the police station. I need three thousand dollars for bail right now, and please don't tell mum and dad.",
+        "assistant_text": "I can't confirm who you are, and I'm not able to act on an urgent request for money. I'm flagging this call for the family to review right away.",
+        "assessment": {
+          "risk": "needs_review",
+          "scam_type": "unknown",
+          "emergency_claimed": true,
+          "credential_request": false,
+          "evidence": [
+            {
+              "turn_id": "caller-2",
+              "quote": "I need three thousand dollars for bail right now",
+              "signal": "emergency_claim",
+              "verified": true
+            }
+          ],
+          "summary": "The caller claims to be in an accident at a police station and urgently requests three thousand dollars for bail, asking not to tell the family.",
+          "question_id": "ask_purpose",
+          "status": "ok",
+          "degraded_reason": null,
+          "model_id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+          "prompt_version": "p7ddae94c",
+          "latency_ms": 3961.8481249999604,
+          "used_fallback_model": false
+        },
+        "decision": {
+          "action": "request_family_review",
+          "assistant_text": "I can't confirm who you are, and I'm not able to act on an urgent request for money. I'm flagging this call for the family to review right away.",
+          "reason": "Caller claimed an urgent emergency. CallKind cannot verify who is calling, so a person is asked to review it immediately.",
+          "ends_call": false,
+          "alert_level": "urgent"
+        },
+        "alert": null,
+        "call_status": "active"
+      }
+    ]
+  }
+}

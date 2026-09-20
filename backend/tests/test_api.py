@@ -214,3 +214,66 @@ def test_deleting_a_call_removes_its_stored_content(client, stub_classifier):
     client.delete(f"/api/calls/{call_id}")
     assert client.get(f"/api/calls/{call_id}").status_code == 404
     assert client.delete(f"/api/calls/{call_id}").status_code == 404
+
+
+# --------------------------------------------------------------------------
+# offline replay
+# --------------------------------------------------------------------------
+def test_replay_is_never_entered_implicitly(client, stub_classifier):
+    """A provider failure must degrade to review, not start playing a recording."""
+    from app.classifier import degraded
+    call_id = start_call(client)
+    stub_classifier(lambda: degraded("provider_timeout", "nvidia/test"))
+    body = send(client, call_id, "Hello there.", "req-1").json()
+    assert body["mode"] != "fixture_replay"
+    assert body["assessment"]["status"] == "degraded"
+
+
+def test_unknown_replay_scenario_is_rejected(client):
+    r = client.post("/api/calls", json={"replay_scenario": "not-a-real-scenario"})
+    assert r.status_code == 400
+    assert "no recorded replay" in r.json()["detail"]
+
+
+def test_replay_runs_offline_and_is_labelled(client, monkeypatch):
+    """Replay must work with no providers reachable at all."""
+    from app import classifier as classifier_mod
+    from app import providers as providers_mod
+
+    async def never(*a, **k):
+        raise AssertionError("replay must not call a provider")
+    monkeypatch.setattr(classifier_mod, "classify", never)
+    monkeypatch.setattr(providers_mod, "transcribe", never)
+
+    from app import fixtures
+    scenarios = fixtures.available_scenarios()
+    if not scenarios:
+        import pytest
+        pytest.skip("no replay recorded; run eval/record_replay.py")
+
+    view = client.post("/api/calls", json={"replay_scenario": scenarios[0]}).json()
+    assert view["mode"] == "fixture_replay"
+
+    body = send(client, view["call_id"], "anything at all", "req-1").json()
+    assert body["mode"] == "fixture_replay"
+    # The recorded caller line is used, not whatever was typed.
+    assert body["caller_text"] != "anything at all"
+    assert body["assessment"]["risk"] in ("no_warning_signs", "needs_review", "high_risk")
+
+
+def test_replay_rejects_turns_past_the_end_of_the_recording(client):
+    from app import fixtures
+    scenarios = fixtures.available_scenarios()
+    if not scenarios:
+        import pytest
+        pytest.skip("no replay recorded")
+    view = client.post("/api/calls", json={"replay_scenario": scenarios[0]}).json()
+    cid = view["call_id"]
+    codes = []
+    for i in range(6):
+        r = send(client, cid, "x", f"req-{i}")
+        codes.append(r.status_code)
+        if r.status_code != 200:
+            break
+    assert 200 in codes
+    assert codes[-1] == 409          # ran out of script, or the call ended

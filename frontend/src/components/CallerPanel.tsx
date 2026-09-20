@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { getReplays, type ReplayMeta } from '../api'
 import { MAX_RECORDING_MS, isTypingTarget, useRecorder } from '../useRecorder'
 import type { useCall } from '../useCall'
 import { ModeBadge } from './ModeBadge'
@@ -34,8 +35,11 @@ export function CallerPanel({ ctl }: { ctl: ReturnType<typeof useCall> }) {
   } = ctl
 
   const [typed, setTyped] = useState('')
+  const [replays, setReplays] = useState<ReplayMeta | null>(null)
   const [hint, setHint] = useState<string | null>(null)
   const hintTimer = useRef<number | null>(null)
+
+  useEffect(() => { getReplays().then(setReplays).catch(() => undefined) }, [])
 
   const flashHint = useCallback((msg: string) => {
     setHint(msg)
@@ -268,6 +272,25 @@ export function CallerPanel({ ctl }: { ctl: ReturnType<typeof useCall> }) {
         </button>
         {ended && <span className="ended-note">Call ended — restart to run another scenario.</span>}
       </div>
+
+      {replays && replays.scenarios.length > 0 && (
+        <details className="replay-controls">
+          <summary>Offline replay — no live inference</summary>
+          <p className="fine">
+            Plays back a recording of a real run from{' '}
+            {replays.recorded_at ? new Date(replays.recorded_at).toLocaleString() : 'an earlier run'}
+            {replays.recorded_model ? ` (${replays.recorded_model.replace(/^nvidia\//, '')})` : ''}.
+            Use this only if the network is down, and say out loud that it is a replay.
+          </p>
+          <div className="row">
+            {replays.scenarios.map((name) => (
+              <button key={name} className="ghost small" onClick={() => void reset(name)}>
+                {name.replace(/_/g, ' ')}
+              </button>
+            ))}
+          </div>
+        </details>
+      )}
     </section>
   )
 }

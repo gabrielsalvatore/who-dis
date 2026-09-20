@@ -1,0 +1,71 @@
+# Evaluation
+
+Synthetic scenarios only. Nothing here supports a claim about real-world prevention
+accuracy. Both systems see identical transcript prefixes, neither ever sees a future
+turn, and both are run through the **same** policy layer, so what is compared is the
+whole system rather than a lone classifier. No TTS is generated during evaluation.
+
+## How to read the two recall numbers
+
+**Model `high_risk` label recall** is how often Nemotron picked the word `high_risk`.
+**System protective recall** is how often CallKind actually did something protective —
+ended the call or raised a review alert. The second is the one that matters, and the
+gap between them is the whole architectural point: the backend acts on *verified
+evidence*, not on the model's choice of label. On a direct one-time-code request the
+model frequently says `needs_review`, yet the system still ends the call, because
+`credential_request` plus a re-verified quote is what the policy keys on.
+
+## Development set
+
+`12` conversations · `24` prefixes · dataset `dcd379a81d1` (tuning split — freezing does not apply) · run `2026-09-19T23:56:02.687136+00:00`
+
+| Metric | kw-v1 | nvidia/nemotron-3-nano-omni-30b-a3b-reasoning / prompt p7ddae94c |
+|---|---|---|
+| System protective recall on scams | 5/6 (83%) | 6/6 (100%) |
+| Model `high_risk` label recall | 3/6 (50%) | 2/6 (33%) |
+| Benign high-risk false alarms | 1/6 (17%) | 0/6 (0%) |
+| Benign calls incorrectly ended | 1/6 (17%) | 0/6 (0%) |
+| Benign calls sent to review | 2/6 (33%) | 1/6 (17%) |
+| Benign handled without review | 4/6 (67%) | 5/6 (83%) |
+| Prefix risk within acceptable set | 21/24 (88%) | 24/24 (100%) |
+| Forbidden-action violations | 1/24 (4%) | 0/24 (0%) |
+| Evidence quotes verified | 13/13 (100%) | 26/26 (100%) |
+| Classify latency median | 0.0 ms | 2465.4 ms |
+| Classify latency p95 | 0.0 ms | 3423.9 ms |
+| Latency sample size | 24 | 24 |
+| Provider failures | 0 | 0 |
+
+Scams missed entirely: `none`. First protective turn among detected scams (mean): `1.67` — Mean is over DETECTED scams only; missed calls are listed separately.
+
+### Failure cases — keyword
+
+**dev-08 (bank warning negation) — keyword took a forbidden action.**
+
+> Caller: "I'm calling to remind you that we will never ask you to read out a one time code. Never give it to anyone who rings you."
+
+Model said `high_risk`; policy chose `end_simulated_call`. Expected any of ['no_warning_signs', 'needs_review'], and `end_simulated_call` was forbidden here.
+
+## Held-out test set
+
+*Not yet run.*
+
+## The keyword baseline
+
+`eval/keyword_baseline.py`, version `kw-v1`, frozen 2026-09-19. Rules are published in
+full in that file and were not tuned against results. It matches credential, payment,
+urgency, secrecy and authority vocabulary in the caller's words.
+
+Its instructive failure is `dev-08`: a bank calling to warn a customer *never* to read
+out a one-time code. The baseline matches the words `one time code`, calls it
+`high_risk`, and **hangs up on the warning**. It cannot tell who is asking whom to do
+what. That single case is the clearest argument for using a language model here at all.
+
+## What is not measured
+
+- Real callers, real microphones, real rooms. Spoken checks used synthesised speech
+  through a fake capture device plus a small number of manual runs.
+- Any browser other than Chromium.
+- Anything about real-world scam prevalence, prevention or financial loss.
+- Fixture replay is a recording of earlier real inference and is excluded from every
+  number above.
+
