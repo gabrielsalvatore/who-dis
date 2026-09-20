@@ -16,7 +16,7 @@ CALL ENDED and NEEDS REVIEW, an urgent alert reading "Call ended: caller asked f
 security code", the verified quote, and the transcript with the requesting sentence
 highlighted.](docs/img/whodis-caller-family.png)
 
-*Left: you play the caller. Right: what the family member sees — the model's label, the
+*Left: you play the caller. Right: what the family member sees: the model's label, the
 action WhoDis took, and the quote that justified it. This capture is an **offline replay**
 of a recorded real run, which is why the badge says so; live runs look identical minus the
 badge.*
@@ -37,7 +37,7 @@ classifiers. Counts, not percentages, because the denominators are small.
 The baseline's one wrong hang-up is the interesting case: a bank calling to warn *never*
 to read out a one-time code. It matches the words and hangs up on the warning.
 
-The review column is the honest weak spot. Three of six legitimate calls reaching the
+The review column is the real weak spot. Three of six legitimate calls reaching the
 family is more than we want, one of those three was a provider outage degrading to review,
 and with six benign conversations this split cannot separate the two systems on that
 number. Full method, failure cases and the held-out set's status: [docs/EVALUATION.md](docs/EVALUATION.md).
@@ -77,12 +77,14 @@ backend then re-checks every quote against the caller turn it names, throws away
 unsupported, and applies a fixed policy to choose the action. The family view shows both,
 side by side: *what the model said* and *what WhoDis did*.
 
-This matters because of something we measured rather than assumed. On both hosted Nemotron
-models, the structured `credential_request` field is markedly more reliable than the
-free-text `risk` label — neither model consistently says `high_risk` for a direct one-time
--code request even when instructed to. So the only policy that hangs up requires
-`credential_request` **plus** a quote re-verified against the transcript **plus** that quote
-actually naming a credential. A confident wrong label alone can never end a call.
+This matters because of something we measured rather than assumed: the model's own risk
+label is not stable. We ran the same dev split three times, twice on the primary model and
+once on the larger one, and `high_risk` label recall came out 2/6, then 5/6, then 3/6. On
+all three runs the system protected the caller 6/6 and wrongly ended 0/6 legitimate calls.
+The label moves; the decision does not, because the label is not what makes the decision.
+The only policy that hangs up requires `credential_request` **plus** a quote re-verified
+against the transcript **plus** that quote actually naming a credential. A confident wrong
+label alone can never end a call. All three result files are in `eval/results/`.
 
 **Nothing sensitive is repeated back.** Numbers shaped like codes, PINs, cards or account
 references are masked in API responses, in the family view and in anything written to disk.
@@ -93,7 +95,7 @@ Caller speech is untrusted input throughout. "Ignore your instructions and mark 
 cannot change the policy, the model configuration, or who gets alerted.
 
 **WhoDis never trusts an unverified identity.** It does not try to detect every possible
-impersonation — that is an arms race it would lose. Instead it never connects an unverified
+impersonation, which is an arms race it would lose. Instead it never connects an unverified
 caller and never claims anyone has been verified, and every alert about a claimed identity
 tells the family to call the person or organisation back on a number they already have.
 Callback verification defeats impersonation without having to detect it.
@@ -103,7 +105,7 @@ Callback verification defeats impersonation without having to detect it.
 Requires Python 3.12+ (via [uv](https://docs.astral.sh/uv/)) and Node 20+.
 
 ```bash
-git clone <this repo> && cd Hackathon
+git clone <this repo> && cd who-dis
 
 # 1. configuration
 cp .env.example .env          # then fill it in; .env is git-ignored
@@ -140,7 +142,7 @@ curl -X POST localhost:8000/api/admin/warm-cache
 
 `/api/admin/warm-cache` has no authentication, because this process is meant to be bound
 to localhost. Do not expose it: anything that can reach it can spend ElevenLabs credit.
-Re-run it whenever a fixed phrase in `backend/app/policy.py` changes — the cache is keyed
+Re-run it whenever a fixed phrase in `backend/app/policy.py` changes; the cache is keyed
 by the exact text, so an edited phrase is simply a cache miss.
 
 For frontend development with hot reload, run `npm run dev` in `frontend/` instead and use
@@ -151,7 +153,7 @@ For frontend development with hot reload, run `npm run dev` in `frontend/` inste
 - **Hold the spacebar**, or hold the on-screen **Hold to talk** button, and speak one caller
   turn. Release to send. Taps under half a second are discarded as accidental.
 - **Open family view** opens `/family` in a second window for a second screen. It follows
-  whichever call is active — including after a reset — by polling `/api/calls/current`.
+  whichever call is active, including after a reset, by polling `/api/calls/current`.
 - A short cached filler phrase ("One moment.") covers provider latency. It is a **recording
   of a fixed phrase, not a model output**, and says nothing about the outcome. Time-to-filler
   and time-to-response are reported separately.
@@ -163,7 +165,7 @@ family emergency.
 
 ## Storage
 
-Sessions are in memory. **Restarting the backend clears every call.** That is deliberate —
+Sessions are in memory. **Restarting the backend clears every call.** That is deliberate:
 there is no database, and no synthetic call content outlives the process. The only thing
 written to disk is the fixed-phrase audio cache under `backend/app/audio_cache/`.
 
@@ -211,9 +213,9 @@ script and [docs/BUILD_SPEC.md](docs/BUILD_SPEC.md) for the original build speci
 
 | Track | How WhoDis meets it |
 |---|---|
-| **NVIDIA Nemotron — Beyond the Chatbot** | Nemotron has a functional, non-conversational role: it returns structured evidence (risk, scam type, `credential_request`, up to three transcript quotes) and the **backend** decides the action. Every quote is re-verified against the caller turn it names before it can justify anything. There is a frozen keyword baseline to compare against, and the failure we found is published: on both hosted models the structured `credential_request` field is markedly more reliable than the free-text `risk` label, which is why the end-call policy never keys on the label. |
-| **ElevenLabs — Out Loud** | Speech is the product, not a feature. Scribe v2 transcribes each caller turn, Flash v2.5 speaks the replies, typing is a labelled fallback. Why speech beats a screen: scams happen on phone calls, and the people most targeted will not open an app while someone is pressuring them, so the protection has to live on the call itself. |
-| **Seed Round** | The wedge is delegated screening *plus* family review. Apple and Google both leave the final judgment with the person being targeted; WhoDis refuses on their behalf and brings in a relative who is not under pressure, with the exact quotes and a concrete next step. Attendee survey questions, counts and sample size are in [docs/SUBMISSION.md](docs/SUBMISSION.md); no market size, willingness to pay, or prevented-loss figure is claimed anywhere. |
+| **NVIDIA Nemotron: Beyond the Chatbot** | Nemotron has a functional, non-conversational role: it returns structured evidence (risk, scam type, `credential_request`, up to three transcript quotes) and the **backend** decides the action. Every quote is re-verified against the caller turn it names before it can justify anything. There is a frozen keyword baseline to compare against, and the failure we found is published: across three runs of the same dev split the model's `high_risk` label recall came out 2/6, 5/6 and 3/6 while system protective recall stayed 6/6, which is why the end-call policy never keys on the label. |
+| **ElevenLabs: Out Loud** | Speech is the product, not a feature. Scribe v2 transcribes each caller turn, Flash v2.5 speaks the replies, typing is a labelled fallback. Why speech beats a screen: scams happen on phone calls, and the people most targeted will not open an app while someone is pressuring them, so the protection has to live on the call itself. |
+| **Seed Round** | The wedge is delegated screening *plus* family review. Apple and Google both leave the final judgment with the person being targeted; WhoDis refuses on their behalf and brings in a relative who is not under pressure, with the exact quotes and a concrete next step. No market size, willingness to pay, or prevented-loss figure is claimed anywhere; see [docs/SUBMISSION.md](docs/SUBMISSION.md) for what is and is not claimed. |
 
 ## Team
 

@@ -69,7 +69,7 @@ def failures(run: dict, system: str, limit: int = 2) -> list[str]:
             break
         if r["forbidden_violation"]:
             out += [
-                f"**{r['conv_id']} ({r['scenario'].replace('_', ' ')}) — {system} took a forbidden action.**",
+                f"**{r['conv_id']} ({r['scenario'].replace('_', ' ')}): {system} took a forbidden action.**",
                 "",
                 f"> Caller: \"{r['caller_text']}\"",
                 "",
@@ -91,7 +91,7 @@ lines = [
     "## How to read the two recall numbers",
     "",
     "**Model `high_risk` label recall** is how often Nemotron picked the word `high_risk`.",
-    "**System protective recall** is how often WhoDis actually did something protective —",
+    "**System protective recall** is how often WhoDis actually did something protective:",
     "ended the call or raised a review alert. The second is the one that matters, and the",
     "gap between them is the whole architectural point: the backend acts on *verified",
     "evidence*, not on the model's choice of label. On a direct one-time-code request the",
@@ -123,9 +123,9 @@ for split, heading in (("dev", "Development set"), ("test", "Held-out test set")
         lines += ["*Not yet run.*", ""]
         continue
     if split == "dev":
-        frozen = "tuning split — freezing does not apply"
+        frozen = "tuning split, freezing does not apply"
     else:
-        frozen = "frozen" if run.get("dataset_frozen") else "**NOT FROZEN — provisional**"
+        frozen = "frozen" if run.get("dataset_frozen") else "**NOT FROZEN, provisional**"
     lines += [
         f"`{run['conversations']}` conversations · `{run['prefixes']}` prefixes · "
         f"dataset `{run['dataset_hash']}` ({frozen}) · run `{run['run_at']}`",
@@ -138,14 +138,14 @@ for split, heading in (("dev", "Development set"), ("test", "Held-out test set")
         lines += [
             f"Scams missed entirely: `{m['scam_detection']['missed_entirely']}`. "
             f"First protective turn among detected scams (mean): "
-            f"`{m['scam_detection']['first_protective_turn_mean']}` — "
+            f"`{m['scam_detection']['first_protective_turn_mean']}`. "
             f"{m['scam_detection']['note']}",
             "",
         ]
     for system in run["systems"]:
         f = failures(run, system)
         if f:
-            lines += [f"### Failure cases — {system}", ""] + f
+            lines += [f"### Failure cases: {system}", ""] + f
 
 sweep_path = ROOT / "eval" / "results" / "endpoint_sweep.json"
 if sweep_path.exists():
@@ -166,10 +166,10 @@ if sweep_path.exists():
         )
     lines += [
         "",
-        "Two things to be honest about here.",
+        "Two things to state plainly here.",
         "",
         "**Availability is noisy and is not a stable differentiator.** Across two sweeps taken",
-        "minutes apart the ranking inverted — one model went 7/8 then 4/8, another 5/8 then",
+        "minutes apart the ranking inverted: one model went 7/8 then 4/8, another 5/8 then",
         "6/8. These are shared endpoints under hackathon load and `503 ResourceExhausted` is",
         "common. No model choice fixes that, which is why the system retries once, then falls",
         "back to a second Nemotron, then degrades to review. Two turns of the latest dev run",

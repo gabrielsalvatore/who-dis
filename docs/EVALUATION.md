@@ -8,7 +8,7 @@ whole system rather than a lone classifier. No TTS is generated during evaluatio
 ## How to read the two recall numbers
 
 **Model `high_risk` label recall** is how often Nemotron picked the word `high_risk`.
-**System protective recall** is how often WhoDis actually did something protective —
+**System protective recall** is how often WhoDis actually did something protective:
 ended the call or raised a review alert. The second is the one that matters, and the
 gap between them is the whole architectural point: the backend acts on *verified
 evidence*, not on the model's choice of label. On a direct one-time-code request the
@@ -28,7 +28,7 @@ as though they were. The prompt has not been tuned against the test set.
 
 ## Development set
 
-`12` conversations · `24` prefixes · dataset `dcd379a81d1` (tuning split — freezing does not apply) · run `2026-09-20T02:20:52.338993+00:00`
+`12` conversations · `24` prefixes · dataset `dcd379a81d1` (tuning split, freezing does not apply) · run `2026-09-20T02:20:52.338993+00:00`
 
 | Metric | kw-v1 | nvidia/nemotron-3-nano-omni-30b-a3b-reasoning / prompt p7ddae94c |
 |---|---|---|
@@ -46,11 +46,11 @@ as though they were. The prompt has not been tuned against the test set.
 | Latency sample size | 24 | 22 |
 | Provider failures | 0 | 2 |
 
-Scams missed entirely: `none`. First protective turn among detected scams (mean): `1.67` — Mean is over DETECTED scams only; missed calls are listed separately.
+Scams missed entirely: `none`. First protective turn among detected scams (mean): `1.67`. Mean is over DETECTED scams only; missed calls are listed separately.
 
-### Failure cases — keyword
+### Failure cases: keyword
 
-**dev-08 (bank warning negation) — keyword took a forbidden action.**
+**dev-08 (bank warning negation): keyword took a forbidden action.**
 
 > Caller: "I'm calling to remind you that we will never ask you to read out a one time code. Never give it to anyone who rings you."
 
@@ -70,10 +70,10 @@ Measured 2026-09-20T01:03:48.232151+00:00 with a 8 s timeout. Point-in-time meas
 | `nemotron-3-nano-omni-30b-a3b-reasoning` | 6/8 | 2785.9 ms | 3034.3 ms | {'HTTP503': 2} |
 | `nemotron-3.5-lightning-30b-a3b` | 5/8 | 3190.4 ms | 3267.9 ms | {'ReadTimeout': 3} |
 
-Two things to be honest about here.
+Two things to state plainly here.
 
 **Availability is noisy and is not a stable differentiator.** Across two sweeps taken
-minutes apart the ranking inverted — one model went 7/8 then 4/8, another 5/8 then
+minutes apart the ranking inverted: one model went 7/8 then 4/8, another 5/8 then
 6/8. These are shared endpoints under hackathon load and `503 ResourceExhausted` is
 common. No model choice fixes that, which is why the system retries once, then falls
 back to a second Nemotron, then degrades to review. Two turns of the latest dev run
