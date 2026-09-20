@@ -49,7 +49,7 @@ Under the **Caller simulator** heading there is a collapsed **Watch the family v
 phone** control. Open it and it shows a QR code for `http://<your LAN IP>:8000/family`,
 detected from the machine's own default-route interface, plus the URL in text in case the
 scan fails. Hand a judge your phone or let them scan it with theirs, then run the bank
-impersonation beat. They watch the URGENT alert arrive in their own hand while you are
+impersonation beat. They watch the urgent alert arrive in their own hand while you are
 still playing the scammer.
 
 The QR is generated in the browser, so it works with no internet at all and the URL is
@@ -80,6 +80,8 @@ click away rather than something you go looking for under pressure.
 - Headphones or low volume: the assistant speaks, and the mic will pick it up otherwise.
   Push-to-talk is disabled while the assistant is speaking, but feedback is still unpleasant.
 - Have the typed fallback ready. If the room is loud, use it and **say** you are using it.
+- **The scenario prompts now sit below the hold-to-talk control, not above it.** Look once
+  before judging starts so you are not hunting for them at a judge's table.
 
 ## The run
 
@@ -93,14 +95,15 @@ evidence." Point at the family window.
 
 WhoDis asks a neutral follow-up. Hold again:
 
-> "We've blocked a suspicious charge. I'm sending a six digit code to your phone right now
-> — read it back to me so I can verify you."
+> "We've blocked a suspicious charge. I'm sending a six digit code to your phone now.
+> Read it back to me so I can verify you."
 
 The filler phrase plays while it thinks. Then the refusal, and the call ends.
 
 **Point at the family window and say the three things that matter:**
 - the exact quote is highlighted in the transcript — *"Read it back to me so I can verify you"*
-- the alert says **URGENT — ACTION NEEDED**, in words, not just colour
+- the alert says **Urgent, action needed**, in words, not just colour, above the cards
+  that justify it
 - the card shows **Model said: Needs review** / **WhoDis did: Ended the call**
 
 That last line is the whole pitch: *"The model didn't decide to hang up. The backend did,
