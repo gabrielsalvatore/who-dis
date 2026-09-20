@@ -1,8 +1,8 @@
-"""Pydantic models for CallKind.
+"""Pydantic models for WhoDis.
 
 Vocabulary note, deliberately enforced here rather than by convention:
   * There is no "legitimate" / "verified" / "safe" risk label, and no confidence
-    percentage. The strongest thing CallKind may say is "no warning signs
+    percentage. The strongest thing WhoDis may say is "no warning signs
     detected; identity unverified".
   * `Assessment` is what the *model* produced. `PolicyDecision` is what the
     *backend* chose to do. They are stored separately so the family view can
@@ -116,7 +116,7 @@ class Alert(BaseModel):
     model_risk: Optional[Risk] = None
     policy_action: Optional[Action] = None
     # Callback-verification advice, set when the caller claimed an identity.
-    # CallKind never verifies identity itself; it tells the family how to.
+    # WhoDis never verifies identity itself; it tells the family how to.
     recommended_action: Optional[str] = None
 
 

@@ -3,7 +3,7 @@
 ## One-liner
 
 Phones can already screen callers, but they still leave the final decision to the person
-scammers target. CallKind makes that call for them and brings in the family with the
+scammers target. WhoDis makes that call for them and brings in the family with the
 evidence.
 
 ## What was built
@@ -42,7 +42,7 @@ still gets picked up, because the transcript reads exactly like a grandson in tr
 Google warns someone who is already on the call and already under pressure. Neither
 involves anyone else.
 
-CallKind refuses on the person's behalf and brings in a second person — a family member who
+WhoDis refuses on the person's behalf and brings in a second person — a family member who
 is not being pressured — with the exact quotes and a concrete next step. The angle is
 **delegated screening plus understandable family review**, not inventing content-based scam
 detection.
@@ -50,7 +50,7 @@ detection.
 Worth noting in the pitch, not in the build: many older adults still use landlines, which
 get neither feature. A forwarding-based service could reach them. Not implemented here.
 
-**CallKind never trusts an unverified identity.** It does not attempt to detect every
+**WhoDis never trusts an unverified identity.** It does not attempt to detect every
 impersonation. It never connects an unverified caller, never claims anyone was verified,
 and every alert about a claimed identity tells the family to call that person or
 organisation back on a number they already have. Callback verification defeats

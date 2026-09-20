@@ -100,6 +100,10 @@ Reply with one JSON object and nothing else:
 "evidence":[{"turn_id":"caller-1","quote":"...","signal":"..."}],"summary":"...",\
 "question_id":null}"""
 
+# The prompt text is frozen. PROMPT_VERSION is a hash of it, and every published
+# result in docs/EVALUATION.md and every recorded replay is keyed to p7ddae94c, so
+# editing a single character here would orphan them. That is why it still says
+# CallKind, the name this project shipped its measurements under.
 PROMPT_VERSION = "p" + hashlib.sha256(SYSTEM_PROMPT.encode()).hexdigest()[:8]
 
 # Output budget. Small on purpose: the hosted endpoints generate slowly under

@@ -7,7 +7,7 @@ function Header({ subtitle }: { subtitle: string }) {
   return (
     <header className="app-head">
       <div>
-        <h1>CallKind</h1>
+        <h1>WhoDis</h1>
         <p className="tagline">
           Screens suspicious conversations and gives a trusted family member the evidence to review.
         </p>
@@ -46,7 +46,7 @@ function CallRoute() {
       </main>
       <footer className="app-foot">
         Prototype. Not a phone-network integration and not continuous live-call monitoring.
-        CallKind never verifies a caller's identity.
+        WhoDis never verifies a caller's identity.
       </footer>
     </div>
   )

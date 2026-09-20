@@ -8,7 +8,7 @@ than copied so there is exactly one published copy of those rules.
 
 The point it makes on stage is `dev-08`: a real bank calling to warn a customer
 never to read out a one time code. kw-v1 matches the words and hangs up on the
-bank. CallKind reads who is asking whom to do what, and does not.
+bank. WhoDis reads who is asking whom to do what, and does not.
 """
 from __future__ import annotations
 

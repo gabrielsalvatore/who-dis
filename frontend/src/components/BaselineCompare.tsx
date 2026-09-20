@@ -14,7 +14,7 @@ const SEVERITY: Record<Action, 'calm' | 'review' | 'urgent'> = {
 /** What the frozen keyword baseline would have done with the same transcript.
  *
  * Fetched after the turn is already answered and rendered, so it is never on the
- * critical path, and it is labelled as a comparison because CallKind does not
+ * critical path, and it is labelled as a comparison because WhoDis does not
  * read it, act on it, or weigh it against its own decision.
  */
 export function BaselineCompare({ result }: { result: TurnResult }) {
@@ -42,12 +42,12 @@ export function BaselineCompare({ result }: { result: TurnResult }) {
     <div className={`baseline${differs ? ' baseline-differs' : ''}`}>
       <p className="baseline-caption">
         Beside the frozen keyword baseline <strong>{data.baseline_version}</strong>, run on the
-        same words. A comparison only: CallKind does not act on it.
+        same words. A comparison only: WhoDis does not act on it.
       </p>
 
       <div className="baseline-grid">
         <div>
-          <span className="baseline-who">CallKind</span>
+          <span className="baseline-who">WhoDis</span>
           <span className={`baseline-verdict v-${SEVERITY[ours]}`}>{ACTION_LABEL[ours]}</span>
         </div>
         <div>

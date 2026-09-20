@@ -1,4 +1,4 @@
-"""Policy unit tests: what CallKind *does*, given what the model claimed."""
+"""Policy unit tests: what WhoDis *does*, given what the model claimed."""
 from app.classifier import verify_evidence
 from app.policy import CallState, decide, supporting_credential_quote
 from app.schemas import Turn
@@ -315,7 +315,7 @@ def test_unverified_severe_signal_does_not_escalate():
 
 
 # --------------------------------------------------------------------------
-# callback verification: CallKind never verifies identity, it routes verification
+# callback verification: WhoDis never verifies identity, it routes verification
 # --------------------------------------------------------------------------
 def test_emergency_alert_tells_the_family_how_to_verify():
     turns = [caller("caller-1", "Grandma it's Tom, I need bail money right now.")]

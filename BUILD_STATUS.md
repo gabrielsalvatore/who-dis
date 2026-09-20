@@ -1,6 +1,6 @@
 # BUILD_STATUS
 
-Progress log for CallKind. Newest entry last. Purpose: resume work after a context reset.
+Progress log for WhoDis. Newest entry last. Purpose: resume work after a context reset.
 
 Deadline note: build started 2026-09-19 ~16:50 local, ~17 h budget → feature freeze target
 2026-09-20 ~06:50, submission by ~09:50. **Reconfirm the real SteelHacks XIII deadline.**

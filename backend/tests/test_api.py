@@ -45,7 +45,7 @@ def test_full_turn_returns_assessment_and_decision_separately(client, stub_class
     assert r.status_code == 200
     body = r.json()
     assert body["assessment"]["risk"] == "high_risk"          # what the model said
-    assert body["decision"]["action"] == "end_simulated_call"  # what CallKind did
+    assert body["decision"]["action"] == "end_simulated_call"  # what WhoDis did
     assert body["call_status"] == "ended"
     assert body["alert"]["level"] == "urgent"
     assert body["assessment"]["evidence"][0]["verified"] is True

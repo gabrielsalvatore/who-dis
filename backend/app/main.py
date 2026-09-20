@@ -1,7 +1,7 @@
-"""CallKind API.
+"""WhoDis API.
 
 Endpoints are intentionally few. The interesting logic lives in classifier.py
-(what the model claims), policy.py (what CallKind does) and sessions.py (the
+(what the model claims), policy.py (what WhoDis does) and sessions.py (the
 concurrency guards).
 """
 from __future__ import annotations
@@ -47,7 +47,7 @@ async def lifespan(app: FastAPI):
     app.state.http = httpx.AsyncClient()
     app.state.phrase_cache = providers.PhraseCache(settings)
     logger.info(
-        "CallKind starting | mode=%s classifier=%s speech=%s model=%s prompt=%s",
+        "WhoDis starting | mode=%s classifier=%s speech=%s model=%s prompt=%s",
         settings.app_mode,
         settings.classifier_configured,
         settings.speech_configured,
@@ -62,7 +62,7 @@ async def lifespan(app: FastAPI):
         await app.state.http.aclose()
 
 
-app = FastAPI(title="CallKind", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title="WhoDis", version="0.1.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=get_settings().allowed_origins,
@@ -200,7 +200,7 @@ async def baseline_comparison(call_id: str) -> dict:
 
     Fetched by the UI *after* the real turn has been answered, so it cannot slow
     a response down, and computed over its own policy state, so it cannot reach
-    the live call. It is labelled in the UI as a comparison; CallKind never acts
+    the live call. It is labelled in the UI as a comparison; WhoDis never acts
     on it.
     """
     session = store.get(call_id)

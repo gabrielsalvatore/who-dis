@@ -91,7 +91,7 @@ lines = [
     "## How to read the two recall numbers",
     "",
     "**Model `high_risk` label recall** is how often Nemotron picked the word `high_risk`.",
-    "**System protective recall** is how often CallKind actually did something protective —",
+    "**System protective recall** is how often WhoDis actually did something protective —",
     "ended the call or raised a review alert. The second is the one that matters, and the",
     "gap between them is the whole architectural point: the backend acts on *verified",
     "evidence*, not on the model's choice of label. On a direct one-time-code request the",

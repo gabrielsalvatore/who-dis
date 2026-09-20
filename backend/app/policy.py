@@ -1,12 +1,12 @@
 """The backend decision layer.
 
-This is deliberately the only place that decides what CallKind *does*. The
+This is deliberately the only place that decides what WhoDis *does*. The
 classifier supplies observations; this module supplies actions. The separation
 matters for two reasons:
 
   * A model that is confidently wrong cannot hang up on anyone by itself. Every
     escalation is gated on evidence the backend re-checked against the transcript.
-  * The family view can show "what the model said" next to "what CallKind did",
+  * The family view can show "what the model said" next to "what WhoDis did",
     which is the whole point of the product.
 
 Measured design note: on the hosted Nemotron endpoints the structured
@@ -78,7 +78,7 @@ CACHEABLE_PHRASES: dict[str, str] = {
 MAX_FOLLOWUPS = 2
 
 # Callback verification. The single most useful thing to tell a worried relative,
-# and the one step that defeats impersonation without CallKind having to detect it:
+# and the one step that defeats impersonation without WhoDis having to detect it:
 # never trust the number that rang you.
 CALLBACK_ADVICE = (
     "Don't call back the number that rang. If you want to check this, call the person or "
@@ -100,7 +100,7 @@ SEVERE_SIGNALS = re.compile(
 )
 
 # Published lexical guard for the end-call policy. A verified quote must either
-# name a credential or be an unambiguous demand to recite one before CallKind
+# name a credential or be an unambiguous demand to recite one before WhoDis
 # will hang up on it. This exists so that `credential_request=True` with an
 # unrelated supporting quote downgrades to review instead of terminating a call.
 #
@@ -207,7 +207,7 @@ def _alert(
 def _dedupe(state: CallState, alert: Alert | None) -> Alert | None:
     """Suppress a repeat of an alert this call has already raised.
 
-    The action still stands - CallKind keeps refusing - but the family sees one
+    The action still stands - WhoDis keeps refusing - but the family sees one
     alert per distinct concern rather than one per caller turn.
     """
     if alert is None:
@@ -293,7 +293,7 @@ def decide(
         decision = PolicyDecision(
             action="request_family_review",
             assistant_text=REVIEW_URGENT,
-            reason="Caller claimed an urgent emergency. CallKind cannot verify who is "
+            reason="Caller claimed an urgent emergency. WhoDis cannot verify who is "
                    "calling, so a person is asked to review it immediately.",
             ends_call=False,
             alert_level="urgent",
@@ -321,7 +321,7 @@ def decide(
                 action="request_family_review",
                 assistant_text=REVIEW_GENERAL,
                 reason="The caller has made a request that needs a person to look at it. "
-                       "CallKind will not act on it.",
+                       "WhoDis will not act on it.",
                 ends_call=False,
                 alert_level="review",
             )

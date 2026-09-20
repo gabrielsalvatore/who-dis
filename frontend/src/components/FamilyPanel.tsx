@@ -92,7 +92,7 @@ function AlertCard({ alert }: { alert: Alert }) {
       )}
       <footer className="alert-foot">
         <span>Model said: <strong>{alert.model_risk ? RISK_LABEL[alert.model_risk] : 'n/a'}</strong></span>
-        <span>CallKind did: <strong>{alert.policy_action ? ACTION_LABEL[alert.policy_action] : 'n/a'}</strong></span>
+        <span>WhoDis did: <strong>{alert.policy_action ? ACTION_LABEL[alert.policy_action] : 'n/a'}</strong></span>
       </footer>
     </article>
   )
@@ -106,7 +106,7 @@ function TurnRow({ turn, assessment }: { turn: Turn; assessment?: Assessment }) 
   return (
     <li className={`turn turn-${turn.role}`}>
       <div className="turn-meta">
-        <span className="turn-who">{turn.role === 'caller' ? 'Caller' : 'CallKind'}</span>
+        <span className="turn-who">{turn.role === 'caller' ? 'Caller' : 'WhoDis'}</span>
         <span className="turn-id">{turn.turn_id}</span>
         {turn.source === 'speech' && <span className="turn-src">spoken</span>}
         {turn.source === 'text' && <span className="turn-src">typed</span>}
@@ -183,7 +183,7 @@ export function FamilyPanel({
 
       {call && <ModeBadge mode={call.mode} health={health} />}
 
-      {offline && <p className="notice">Cannot reach the CallKind server. Retrying…</p>}
+      {offline && <p className="notice">Cannot reach the WhoDis server. Retrying…</p>}
 
       {!call && !offline && (
         <p className="notice">
@@ -219,7 +219,7 @@ export function FamilyPanel({
 
           {latestDecision && (
             <div className="outcome">
-              <h3>What CallKind did</h3>
+              <h3>What WhoDis did</h3>
               <p className="outcome-action">{ACTION_LABEL[latestDecision.action]}</p>
               <p className="outcome-reason">{latestDecision.reason}</p>
               {latestAssessment && (
@@ -227,7 +227,7 @@ export function FamilyPanel({
                   The model reported <strong>{RISK_LABEL[latestAssessment.risk]}</strong>
                   {latestAssessment.scam_type !== 'unknown' &&
                     ` (${latestAssessment.scam_type.replace(/_/g, ' ')})`}
-                  . The decision above was made by CallKind's policy, not by the model.
+                  . The decision above was made by WhoDis's policy, not by the model.
                 </p>
               )}
             </div>
@@ -247,7 +247,7 @@ export function FamilyPanel({
             ))}
           </ul>
           <p className="disclaimer">
-            CallKind never confirms a caller's identity and never connects an unverified
+            WhoDis never confirms a caller's identity and never connects an unverified
             caller. "No warning signs" means nothing alarming was said, not that the caller
             is who they claim to be. To check who someone is, call them back on a number you
             already have.

@@ -121,7 +121,7 @@ export function CallerPanel({ ctl }: { ctl: ReturnType<typeof useCall> }) {
       <header className="panel-head">
         <div>
           <h2>Caller simulator</h2>
-          <p className="panel-sub">You play the caller. CallKind answers the phone.</p>
+          <p className="panel-sub">You play the caller. WhoDis answers the phone.</p>
         </div>
         <button className="ghost small" onClick={openFamilyView}>Open family view ↗</button>
       </header>
@@ -268,7 +268,7 @@ export function CallerPanel({ ctl }: { ctl: ReturnType<typeof useCall> }) {
       {lastResult && (
         <div className="last-turn">
           <p className="heard"><strong>Heard:</strong> "{lastResult.caller_text}"</p>
-          <p className="said"><strong>CallKind said:</strong> "{lastResult.assistant_text}"</p>
+          <p className="said"><strong>WhoDis said:</strong> "{lastResult.assistant_text}"</p>
           <div className="row">
             <button className="ghost small" onClick={() => void replay()} disabled={!lastResult.audio_url || playing}>
               Replay
