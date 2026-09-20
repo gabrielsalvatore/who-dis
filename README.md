@@ -109,11 +109,22 @@ written to disk is the fixed-phrase audio cache under `backend/app/audio_cache/`
 ## Tests and evaluation
 
 ```bash
+# backend unit + API tests (providers mocked, no network, no spend)
 .venv/bin/python -m pytest backend/tests -q -c backend/pytest.ini --rootdir backend
-node e2e/spoken_turn.mjs otp_request 13        # real browser, real STT + Nemotron
-.venv/bin/python eval/run_eval.py --split dev --system keyword    # free
-.venv/bin/python eval/run_eval.py --split dev --system both       # real inference
+
+# evaluation: keyword baseline is free, nemotron makes one call per prefix
+.venv/bin/python eval/run_eval.py --split dev --system keyword
+.venv/bin/python eval/run_eval.py --split dev --system both
+.venv/bin/python eval/make_report.py          # regenerates docs/EVALUATION.md
+
+# browser end-to-end (one-off: npm install && npx playwright install chromium)
+node e2e/spoken_turn.mjs otp_request 13       # real browser, real STT + Nemotron
+node e2e/replay_check.mjs                     # offline replay is labelled correctly
 ```
+
+`e2e/spoken_turn.mjs` drives headless Chromium with a fake capture device fed a WAV of
+synthesised caller speech, so it exercises the real microphone → STT → Nemotron path. It is
+weaker than a human speaking into a real microphone, which remains a manual check.
 
 See [docs/EVALUATION.md](docs/EVALUATION.md) for results, the keyword baseline it is
 compared against, and the failure cases. See [docs/DEMO.md](docs/DEMO.md) for the demo

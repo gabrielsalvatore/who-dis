@@ -33,3 +33,4 @@ eval/results/*.md
 /package-lock.json
 eval/results/*.png
 eval/audio_fixtures/*.mp3
+eval/results/*.mp3
