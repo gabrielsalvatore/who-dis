@@ -1,4 +1,24 @@
-# Demo script (~90 seconds)
+# Demo script
+
+## The window you actually get
+
+Judges come to your assigned table; you do not move. **Up to 3 minutes each**, and that is
+the whole pitch. No formal presentation is expected. Slides are allowed but the organisers
+said outright that the time is better spent making sure the demo runs.
+
+If you entered several tracks, a different judge arrives for each one, at different times,
+and a judge may open by naming the track they are judging. Tailor on the spot:
+
+| If the judge says | Lead with | Skip |
+|---|---|---|
+| **ElevenLabs / Out Loud** | Speech is the product. Scribe v2 transcribes each caller turn, Flash v2.5 speaks every reply, and the fixed phrases are pre-cached so the refusal lands instantly. Let them hear the filler phrase cover provider latency, then the refusal. Say that typing is a labelled fallback, not the main path. | The keyword baseline strip, the eval numbers |
+| **NVIDIA Nemotron / Beyond the Chatbot** | The model extracts evidence, the backend decides. Run beat 2, then beat 4c so they see `kw-v1` hang up on a real bank warning. Give the three-run label numbers out loud. | The phone handoff, the override beat |
+| **Seed Round** | Apple and Google both hand the judgment back to the person being targeted. Run beat 2, point at the family window, close on delegated screening plus family review. | The baseline strip, the model internals |
+| nothing in particular | Beat 1, beat 2, beat 5. | Everything optional |
+
+Beats 2 and 5 are the only ones that are never cut. Everything else is a branch you take if
+the judge's track or question calls for it. At 3 minutes you will usually run frame, bank
+impersonation, one supporting beat, close.
 
 ## Before you start
 

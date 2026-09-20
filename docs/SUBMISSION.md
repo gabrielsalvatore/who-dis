@@ -129,6 +129,15 @@ that quote actually naming a credential. A confident wrong label cannot hang up 
 This is why `docs/EVALUATION.md` reports two recall numbers. Model `high_risk` label recall
 and system protective recall differ, and the gap is the point, not an embarrassment.
 
+## Submitting
+
+Two separate actions, both required, and the second one is easy to miss:
+
+- [ ] **Devpost entry, by 10:45 EDT.** No late submissions are accepted.
+- [ ] **Track selection on steelhacks.org**, then click submit there. This is a distinct
+      step from the Devpost entry. Without it the tracks are not entered.
+- [ ] Demo running and verified end to end before hacking ends at 11:00 EDT.
+
 ## Disclosures and eligibility
 
 - [ ] Confirm current submission requirements with organisers.

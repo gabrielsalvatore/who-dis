@@ -2,11 +2,16 @@
 
 Progress log for WhoDis. Newest entry last. Purpose: resume work after a context reset.
 
-Deadline note: submissions close **2026-09-20 11:00 EDT**, per steelhacks.org/schedule read
-at 08:55 EDT that morning. Not confirmed with the organisers directly, so treat 11:00 as
-hard and do not plan into it. The earlier ~09:50 figure in this note was an assumption from
-the ~17 h build budget, not a published time. The remaining hours have to cover the demo
-video and the Devpost writeup, not only code.
+Deadline note, from the organisers' judging-logistics post on 2026-09-20:
+
+- **Devpost submission closes 10:45 EDT.** Stated explicitly: no late submissions.
+- **Hacking ends 11:00 EDT.** The demo has to run by then.
+- **Track selection on steelhacks.org is a second, separate submit.** Choosing the tracks
+  and clicking submit there is not the same action as the Devpost entry, and missing it
+  means not being judged for those tracks.
+
+Budget backward from 10:45, not 11:00. The earlier ~09:50 figure in this note was an
+assumption from the ~17 h build budget and was never a published time.
 
 ---
 
