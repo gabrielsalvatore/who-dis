@@ -155,3 +155,14 @@ script and [docs/BUILD_SPEC.md](docs/BUILD_SPEC.md) for the original build speci
 - Numbers that look like codes, PINs or account details are masked in API responses, the
   family view and anything written to disk. Quote validation still runs on the raw
   in-memory transcript, so masking cannot weaken the evidence check.
+
+## Team
+
+Built at SteelHacks XIII by two Allegheny College undergraduates.
+
+- **Gabriel Salvatore** - senior, Computer Science and Economics.
+  Email: GABRIEL_EMAIL_TODO
+- **Miguel Orti Vila** - junior, Computer Science and Engineering Physics, minors in
+  Mathematics and Economics. Email: miguelorti05@gmail.com
+
+AI coding assistants were used during development, disclosed per event rules.

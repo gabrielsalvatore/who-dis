@@ -132,9 +132,11 @@ only, no extrapolation to market size, willingness to pay, or real-world demand.
 - [ ] Confirm current submission requirements with organisers.
 - [ ] Confirm code-reuse disclosure requirements with organisers.
 - **Do not** enter *No Wrapper* — Nemotron is used in the product.
-- **Do not** claim *Beginner* eligibility — Gabriel is a professional engineer.
-- Built solo during SteelHacks XIII. Scaffolding and implementation assisted by Claude Code;
-  disclose per event rules.
+- **Do not** claim *Beginner* eligibility. The Cold Start track is for teams that are 75%
+  first-timers, which this team is not.
+- Built during SteelHacks XIII by a two-person team of current Allegheny College
+  undergraduates: Gabriel Salvatore and Miguel Orti Vila. AI coding assistants were used
+  during development; disclose per event rules.
 
 ## Limitations to state out loud
 
