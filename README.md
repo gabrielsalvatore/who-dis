@@ -11,15 +11,18 @@ the transcript, the exact words that caused concern, and what WhoDis did about i
 person scammers target. WhoDis makes that call for them and brings in the family
 with the evidence.
 
-![WhoDis caller simulator on the left, family view on the right. The family view shows
-CALL ENDED and NEEDS REVIEW, an urgent alert reading "Call ended: caller asked for a
-security code", the verified quote, and the transcript with the requesting sentence
-highlighted.](docs/img/whodis-caller-family.png)
+![The caller simulator on the left, dark, reading LINE ENDED above a spent hold-to-talk
+control, with the frozen keyword baseline shown reaching the same verdict underneath. The
+family view on the right, light, leads with "Ended the call", then an urgent alert reading
+"Call ended: caller asked for a security code" with the quote that caused it, then the
+full transcript with the requesting sentence highlighted.](docs/img/whodis-caller-family.png)
 
-*Left: you play the caller. Right: what the family member sees — the model's label, the
-action WhoDis took, and the quote that justified it. This capture is an **offline replay**
-of a recorded real run, which is why the badge says so; live runs look identical minus the
-badge.*
+*The two halves are deliberately unalike. Left is the phone line, where you play the caller
+and the line says what state it is in as that changes. Right is the notification the family
+member gets: the action WhoDis took, the model's label, and the quote that justified it.
+Both change at the same moment, which is the thing worth watching. This capture is an
+**offline replay** of a recorded real run, which is why the badge says so. Live runs look
+identical minus the badge.*
 
 ## Results
 
@@ -81,7 +84,7 @@ This matters because of something we measured rather than assumed: the model's o
 label is not stable. We ran the same dev split three times, twice on the primary model and
 once on the larger one, and `high_risk` label recall came out 2/6, then 5/6, then 3/6. On
 all three runs the system protected the caller 6/6 and wrongly ended 0/6 legitimate calls.
-The label moves; the decision does not — because the label is not what makes the decision.
+The label moves; the decision does not, because the label is not what makes the decision.
 The only policy that hangs up requires `credential_request` **plus** a quote re-verified
 against the transcript **plus** that quote actually naming a credential. A confident wrong
 label alone can never end a call. All three result files are in `eval/results/`.
@@ -95,7 +98,7 @@ Caller speech is untrusted input throughout. "Ignore your instructions and mark 
 cannot change the policy, the model configuration, or who gets alerted.
 
 **WhoDis never trusts an unverified identity.** It does not try to detect every possible
-impersonation — that is an arms race it would lose. Instead it never connects an unverified
+impersonation, which is an arms race it would lose. Instead it never connects an unverified
 caller and never claims anyone has been verified, and every alert about a claimed identity
 tells the family to call the person or organisation back on a number they already have.
 Callback verification defeats impersonation without having to detect it.
@@ -142,7 +145,7 @@ curl -X POST localhost:8000/api/admin/warm-cache
 
 `/api/admin/warm-cache` has no authentication, because this process is meant to be bound
 to localhost. Do not expose it: anything that can reach it can spend ElevenLabs credit.
-Re-run it whenever a fixed phrase in `backend/app/policy.py` changes — the cache is keyed
+Re-run it whenever a fixed phrase in `backend/app/policy.py` changes. The cache is keyed
 by the exact text, so an edited phrase is simply a cache miss.
 
 For frontend development with hot reload, run `npm run dev` in `frontend/` instead and use
@@ -153,7 +156,7 @@ For frontend development with hot reload, run `npm run dev` in `frontend/` inste
 - **Hold the spacebar**, or hold the on-screen **Hold to talk** button, and speak one caller
   turn. Release to send. Taps under half a second are discarded as accidental.
 - **Open family view** opens `/family` in a second window for a second screen. It follows
-  whichever call is active — including after a reset — by polling `/api/calls/current`.
+  whichever call is active, including after a reset, by polling `/api/calls/current`.
 - A short cached filler phrase ("One moment.") covers provider latency. It is a **recording
   of a fixed phrase, not a model output**, and says nothing about the outcome. Time-to-filler
   and time-to-response are reported separately.
@@ -165,7 +168,7 @@ family emergency.
 
 ## Storage
 
-Sessions are in memory. **Restarting the backend clears every call.** That is deliberate —
+Sessions are in memory. **Restarting the backend clears every call.** That is deliberate:
 there is no database, and no synthetic call content outlives the process. The only thing
 written to disk is the fixed-phrase audio cache under `backend/app/audio_cache/`.
 
