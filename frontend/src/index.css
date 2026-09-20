@@ -107,6 +107,21 @@ button.small { padding: 6px 11px; font-size: .84rem; }
 .scenario-hints li { margin-bottom: 4px; }
 .fine { font-size: .78rem; color: var(--ink-faint); margin: 6px 0 0; }
 
+/* ---------- phone share (demo affordance, deliberately quiet) ---------- */
+.phone-share { margin-bottom: 18px; }
+.phone-share summary {
+  cursor: pointer; font-size: .82rem; color: var(--ink-faint); padding: 2px 0;
+}
+.phone-share-body {
+  display: flex; gap: 14px; align-items: center;
+  margin-top: 10px; padding: 12px 14px;
+  border: 1px solid var(--line); border-radius: 8px;
+}
+.phone-share-body p { margin-bottom: 6px; }
+.phone-share-body code {
+  font-size: .78rem; color: var(--ink-soft); word-break: break-all;
+}
+
 /* ---------- push to talk ---------- */
 .talk-area { margin-bottom: 18px; }
 .ptt {

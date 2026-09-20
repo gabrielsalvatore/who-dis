@@ -7,13 +7,14 @@ concurrency guards).
 from __future__ import annotations
 
 import logging
+import socket
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Optional
 
 import httpx
-from fastapi import FastAPI, File, Form, HTTPException, Response, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Request, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
@@ -82,12 +83,35 @@ def _http() -> httpx.AsyncClient:
 # --------------------------------------------------------------------------
 # health / setup
 # --------------------------------------------------------------------------
+def _lan_address() -> Optional[str]:
+    """The IPv4 address another device on the same network would reach us on.
+
+    Opening a UDP socket toward an address that is never routed (TEST-NET-1)
+    makes the OS pick the interface the default route would use, without
+    sending anything. There is no portable API that just asks for this.
+    """
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+            sock.settimeout(0.2)
+            sock.connect(("192.0.2.1", 9))
+            ip = str(sock.getsockname()[0])
+    except OSError:
+        return None
+    return None if ip.startswith("127.") else ip
+
+
 @app.get("/api/health", response_model=HealthResponse)
-async def health() -> HealthResponse:
+async def health(request: Request) -> HealthResponse:
     """Configuration only. Never returns credentials and never bills inference."""
     s = get_settings()
     cache = _phrase_cache()
+    # Demo affordance: a judge scans this and watches the alert land on their own
+    # phone. Only meaningful when uvicorn is bound to 0.0.0.0; the port comes from
+    # the request so it is right whichever port the presenter used.
+    ip = _lan_address()
+    port = request.url.port or (443 if request.url.scheme == "https" else 80)
     return HealthResponse(
+        lan_family_url=f"http://{ip}:{port}/family" if ip else None,
         app_mode=s.app_mode,
         classifier_configured=s.classifier_configured,
         speech_configured=s.speech_configured,

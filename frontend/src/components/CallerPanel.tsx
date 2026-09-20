@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { QRCodeSVG } from 'qrcode.react'
 import { getReplays, type ReplayMeta } from '../api'
 import { MAX_RECORDING_MS, isTypingTarget, useRecorder } from '../useRecorder'
 import type { useCall } from '../useCall'
@@ -116,6 +117,22 @@ export function CallerPanel({ ctl }: { ctl: ReturnType<typeof useCall> }) {
         </div>
         <button className="ghost small" onClick={openFamilyView}>Open family view ↗</button>
       </header>
+
+      {health?.lan_family_url && (
+        <details className="phone-share">
+          <summary>Watch the family view on a phone</summary>
+          <div className="phone-share-body">
+            <QRCodeSVG value={health.lan_family_url} size={116} level="M" marginSize={2} />
+            <div>
+              <p className="fine">
+                Scan this on a device on the same network. It opens the family view only,
+                with no caller controls.
+              </p>
+              <code>{health.lan_family_url}</code>
+            </div>
+          </div>
+        </details>
+      )}
 
       <ModeBadge
         mode={lastResult?.mode ?? call?.mode ?? 'live_api'}

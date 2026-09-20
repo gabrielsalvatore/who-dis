@@ -107,6 +107,7 @@ export interface Health {
   prompt_version: string | null
   filler_cached: boolean
   setup_needs: string[]
+  lan_family_url: string | null
 }
 
 export const RISK_LABEL: Record<Risk, string> = {

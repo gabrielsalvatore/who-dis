@@ -3,10 +3,35 @@
 ## Before you start
 
 ```bash
-cd backend && ../.venv/bin/python -m uvicorn app.main:app --port 8000
+cd backend && ../.venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
 ../.venv/bin/python backend/scripts/warm_cache.py     # once; then it is instant
 curl -s localhost:8000/api/health                     # setup_needs must be []
 ```
+
+`--host 0.0.0.0` is what makes the phone handoff below work. Without it uvicorn only
+listens on loopback and nothing else on the network can reach it.
+
+## Putting the family view in a judge's hand
+
+Under the **Caller simulator** heading there is a collapsed **Watch the family view on a
+phone** control. Open it and it shows a QR code for `http://<your LAN IP>:8000/family`,
+detected from the machine's own default-route interface, plus the URL in text in case the
+scan fails. Hand a judge your phone or let them scan it with theirs, then run the bank
+impersonation beat. They watch the URGENT alert arrive in their own hand while you are
+still playing the scammer.
+
+The QR is generated in the browser, so it works with no internet at all and the URL is
+never sent anywhere.
+
+Two things to know before relying on it:
+
+- **A phone hotspot beats conference wifi.** Venue networks very often enable client
+  isolation, which blocks device-to-device traffic even when both devices are online. Put
+  the laptop and the phone on the same hotspot and test the scan once before you present.
+- **Binding `0.0.0.0` exposes the app to whatever network you are on.** The call data is
+  synthetic and lives in memory, but `POST /api/admin/warm-cache` also becomes reachable,
+  and that spends ElevenLabs credit. On an untrusted network, drop the `--host` flag and
+  fall back to the second browser window.
 
 **Run one warm-up turn immediately before you present.** Cold hosted endpoints are slower,
 and the first classification of a session is routinely the slowest. Start a call, send one

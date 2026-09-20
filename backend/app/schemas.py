@@ -178,3 +178,6 @@ class HealthResponse(BaseModel):
     prompt_version: Optional[str] = None
     filler_cached: bool = False
     setup_needs: list[str] = Field(default_factory=list)
+    # LAN URL for the family view, so a second device can be pointed at it.
+    # None when the host has no non-loopback IPv4 address.
+    lan_family_url: Optional[str] = None
