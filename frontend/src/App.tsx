@@ -22,7 +22,7 @@ function FamilyRoute() {
   const { call, health, offline } = useFamilyFeed(1000)
   return (
     <div className="app app-family">
-      <Header subtitle="Family review window · updates automatically" />
+      <Header subtitle="Family review window. Updates automatically." />
       <FamilyPanel call={call} health={health} standalone offline={offline} />
     </div>
   )
@@ -39,7 +39,7 @@ function CallRoute() {
 
   return (
     <div className="app">
-      <Header subtitle="Turn-based browser voice prototype · synthetic scenarios only" />
+      <Header subtitle="Turn-based browser voice prototype. Synthetic scenarios only." />
       <main className="split">
         <CallerPanel ctl={ctl} />
         <FamilyPanel call={ctl.call} health={ctl.health} />

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import { BaselineCompare } from './BaselineCompare'
 import { getReplays, type ReplayMeta } from '../api'
@@ -11,7 +11,7 @@ const SCENARIOS = [
     name: 'Bank impersonation',
     lines: [
       'Hello, this is Dan calling from the fraud team at Northbridge Bank.',
-      "We've blocked a suspicious charge. I'm sending a six digit code to your phone now — read it back to me so I can verify you.",
+      "We've blocked a suspicious charge. I'm sending a six digit code to your phone now. Read it back to me so I can verify you.",
     ],
   },
   {
@@ -64,7 +64,7 @@ export function CallerPanel({ ctl }: { ctl: ReturnType<typeof useCall> }) {
   }, [])
 
   const recorder = useRecorder(
-    useCallback(() => flashHint('That was too short — hold the button while you speak.'), [flashHint]),
+    useCallback(() => flashHint('That was too short. Hold the button while you speak.'), [flashHint]),
   )
 
   const ended = call?.status === 'ended'
@@ -160,8 +160,68 @@ export function CallerPanel({ ctl }: { ctl: ReturnType<typeof useCall> }) {
         </div>
       )}
 
+      {/* ---------------- push to talk ---------------- */}
+      {/* The line's own state, in words. A judge reading this from the far side
+          of a table should see the call drop without anyone saying so. */}
+      <p
+        className={`line-state ${ended ? 'is-dead' : call ? 'is-live' : 'is-none'}`}
+        role="status"
+      >
+        {!ended && call && <span className="line-dot" aria-hidden />}
+        {ended ? 'Line ended' : call ? 'Line open' : 'No line'}
+      </p>
+
+      <div className="talk-area">
+        <div className="dial-wrap">
+          {/* Fills with elapsed recording time against the 30s cap. This is a
+              clock, not an audio level: the recorder exposes no signal level,
+              and a fake one would be a fake reading in a product about evidence. */}
+          <div
+            className={`dial-ring ${recorder.isRecording ? '' : 'idle'}`}
+            style={{ '--pct': capPct } as CSSProperties}
+            aria-hidden
+          />
+          <button
+            className={`ptt ${recorder.isRecording ? 'recording' : ''}`}
+            disabled={!canTalk}
+            // Pointer capture keeps the release on this button even if the pointer
+            // drifts off it mid-sentence, which used to send the turn early.
+            onPointerDown={(e) => {
+              e.preventDefault()
+              e.currentTarget.setPointerCapture?.(e.pointerId)
+              if (canTalk) void recorder.start()
+            }}
+            onPointerUp={(e) => {
+              e.preventDefault()
+              e.currentTarget.releasePointerCapture?.(e.pointerId)
+              void sendRecording()
+            }}
+            onPointerCancel={() => recorder.cancel()}
+            aria-label={recorder.isRecording ? `Recording ${seconds} seconds, release to send` : 'Hold to talk'}
+          >
+            {recorder.isRecording ? (
+              <>
+                <span className="dial-time">{seconds}s</span>
+                <span className="dial-sub">release to send</span>
+              </>
+            ) : (
+              <span>Hold to talk</span>
+            )}
+          </button>
+        </div>
+        {recorder.isRecording && <p className="meter-cap">30s maximum</p>}
+        <p className="ptt-hint">
+          Hold this button or hold the <kbd>spacebar</kbd>. Release to send.
+        </p>
+
+      </div>
+
+      {hint && <p className="notice quiet">{hint}</p>}
+      {blockedReason && !processing && <p className="notice quiet">{blockedReason}</p>}
+      {recorder.error && <p className="notice error">{recorder.error}</p>}
+
       <div className="scenario-hints">
-        <h3>Scenario prompts — say one of these</h3>
+        <h3>Say one of these</h3>
         {SCENARIOS.map((s) => (
           <details key={s.name}>
             <summary>{s.name}</summary>
@@ -171,45 +231,8 @@ export function CallerPanel({ ctl }: { ctl: ReturnType<typeof useCall> }) {
         <p className="fine">All names and details are fictional. Never use real codes or account numbers.</p>
       </div>
 
-      {/* ---------------- push to talk ---------------- */}
-      <div className="talk-area">
-        <button
-          className={`ptt ${recorder.isRecording ? 'recording' : ''}`}
-          disabled={!canTalk}
-          // Pointer capture keeps the release on this button even if the pointer
-          // drifts off it mid-sentence, which used to send the turn early.
-          onPointerDown={(e) => {
-            e.preventDefault()
-            e.currentTarget.setPointerCapture?.(e.pointerId)
-            if (canTalk) void recorder.start()
-          }}
-          onPointerUp={(e) => {
-            e.preventDefault()
-            e.currentTarget.releasePointerCapture?.(e.pointerId)
-            void sendRecording()
-          }}
-          onPointerCancel={() => recorder.cancel()}
-          aria-label="Hold to talk"
-        >
-          {recorder.isRecording ? `Recording ${seconds}s — release to send` : 'Hold to talk'}
-        </button>
-        <p className="ptt-hint">
-          Hold this button or hold the <kbd>spacebar</kbd>. Release to send.
-        </p>
-
-        {recorder.isRecording && (
-          <div className="meter" aria-hidden>
-            <div className="meter-fill" style={{ width: `${capPct}%` }} />
-            <span className="meter-cap">30s max</span>
-          </div>
-        )}
-
-        {hint && <p className="notice quiet">{hint}</p>}
-        {blockedReason && !processing && <p className="notice quiet">{blockedReason}</p>}
-        {recorder.error && <p className="notice error">{recorder.error}</p>}
-
-        {/* Explicit fallback for browsers where hold-to-talk misbehaves. */}
-        <details className="fallback-controls">
+      {/* Explicit fallback for browsers where hold-to-talk misbehaves. */}
+      <details className="fallback-controls">
           <summary>Recording trouble? Use start / send buttons</summary>
           <div className="row">
             <button
@@ -229,9 +252,8 @@ export function CallerPanel({ ctl }: { ctl: ReturnType<typeof useCall> }) {
             <button className="ghost" disabled={!recorder.isRecording} onClick={recorder.cancel}>
               Discard
             </button>
-          </div>
-        </details>
-      </div>
+        </div>
+      </details>
 
       {/* ---------------- typed fallback ---------------- */}
       <form
@@ -281,23 +303,24 @@ export function CallerPanel({ ctl }: { ctl: ReturnType<typeof useCall> }) {
           </div>
           {lastResult.audio_error && (
             <p className="notice quiet">
-              Speech failed ({lastResult.audio_error}) — the assessment above still stands.
+              Speech failed ({lastResult.audio_error}). The assessment above still stands.
             </p>
           )}
           <p className="fine">
             {lastResult.audio_cached && 'Spoken reply is a cached fixed phrase. '}
             {lastResult.timings.transcribe_ms != null &&
-              `transcribe ${Math.round(lastResult.timings.transcribe_ms)}ms · `}
+              `transcribe ${Math.round(lastResult.timings.transcribe_ms)}ms`}
             {lastResult.assessment.latency_ms != null &&
-              `classify ${Math.round(lastResult.assessment.latency_ms)}ms`}
-            {timing && ` · time to filler ${
+              `${lastResult.timings.transcribe_ms != null ? ', ' : ''}classify ${
+                Math.round(lastResult.assessment.latency_ms)}ms`}
+            {timing && `, time to filler ${
               timing.timeToFillerMs == null ? 'skipped' : `${Math.round(timing.timeToFillerMs)}ms`
             }${
               timing.timeToSecondFillerMs == null
                 ? ''
-                : ` · 2nd filler ${Math.round(timing.timeToSecondFillerMs)}ms`
-            } · time to response ${Math.round(timing.timeToResponseMs)}ms`}
-            {lastResult.assessment.used_fallback_model && ' · fallback model used'}
+                : `, time to 2nd filler ${Math.round(timing.timeToSecondFillerMs)}ms`
+            }, time to response ${Math.round(timing.timeToResponseMs)}ms`}
+            {lastResult.assessment.used_fallback_model && ', fallback model used'}
           </p>
         </div>
       )}
@@ -309,12 +332,12 @@ export function CallerPanel({ ctl }: { ctl: ReturnType<typeof useCall> }) {
         <button className="secondary" onClick={() => void reset()}>
           {call ? 'Restart call' : 'Start call'}
         </button>
-        {ended && <span className="ended-note">Call ended — restart to run another scenario.</span>}
+        {ended && <span className="ended-note">Call ended. Restart to run another scenario.</span>}
       </div>
 
       {replays && replays.scenarios.length > 0 && (
         <details className="replay-controls">
-          <summary>Offline replay — no live inference</summary>
+          <summary>Offline replay, no live inference</summary>
           <p className="fine">
             Plays back a recording of a real run from{' '}
             {replays.recorded_at ? new Date(replays.recorded_at).toLocaleString() : 'an earlier run'}

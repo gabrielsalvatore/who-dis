@@ -23,7 +23,7 @@ export function ModeBadge({ mode, health }: { mode: Mode; health: Health | null 
       {health?.classifier_model && mode !== 'fixture_replay' && (
         <span className="mode-detail">
           {health.classifier_model.replace(/^nvidia\//, '')}
-          {health.prompt_version ? ` · prompt ${health.prompt_version}` : ''}
+          {health.prompt_version ? `, prompt ${health.prompt_version}` : ''}
         </span>
       )}
       <span className="mode-detail">{detail}</span>

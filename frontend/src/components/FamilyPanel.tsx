@@ -70,7 +70,7 @@ function AlertCard({ alert }: { alert: Alert }) {
     <article className={`alert-card ${urgent ? 'alert-urgent' : 'alert-review'}`}>
       <header>
         {/* Text label, never colour alone. */}
-        <span className="alert-tag">{urgent ? 'URGENT — ACTION NEEDED' : 'PLEASE REVIEW'}</span>
+        <span className="alert-tag">{urgent ? 'Urgent, action needed' : 'Please review'}</span>
         <h3>{alert.headline}</h3>
       </header>
       <p className="alert-summary">{alert.summary}</p>
@@ -207,16 +207,6 @@ export function FamilyPanel({
             )}
           </div>
 
-          {alerts.length > 0 ? (
-            <div className="alerts">
-              {[...alerts].reverse().map((a) => (
-                <AlertCard key={a.alert_id} alert={a} />
-              ))}
-            </div>
-          ) : (
-            <p className="notice quiet">No alerts raised for this call.</p>
-          )}
-
           {latestDecision && (
             <div className="outcome">
               <h3>What WhoDis did</h3>
@@ -231,6 +221,16 @@ export function FamilyPanel({
                 </p>
               )}
             </div>
+          )}
+
+          {alerts.length > 0 ? (
+            <div className="alerts">
+              {[...alerts].reverse().map((a) => (
+                <AlertCard key={a.alert_id} alert={a} />
+              ))}
+            </div>
+          ) : (
+            <p className="notice quiet">No alerts raised for this call.</p>
           )}
 
           <h3 className="transcript-head">Transcript</h3>
