@@ -35,7 +35,7 @@ export interface Recording {
   filename: string
 }
 
-export function useRecorder(onTooShort: () => void) {
+export function useRecorder(onTooShort: () => void, onAutoStop?: (recording: Recording) => void) {
   const [status, setStatus] = useState<RecorderStatus>('idle')
   const [elapsedMs, setElapsedMs] = useState(0)
   const [error, setError] = useState<string | null>(null)
@@ -125,7 +125,9 @@ export function useRecorder(onTooShort: () => void) {
         resolve?.(null)
         return
       }
-      resolve?.({ blob, durationMs, filename: `turn.${extensionFor(type)}` })
+      const recording = { blob, durationMs, filename: `turn.${extensionFor(type)}` }
+      if (resolve) resolve(recording)
+      else onAutoStop?.(recording)
     }
 
     startedAtRef.current = Date.now()
@@ -140,7 +142,7 @@ export function useRecorder(onTooShort: () => void) {
       if (recorderRef.current?.state === 'recording') recorderRef.current.stop()
     }, MAX_RECORDING_MS)
     return true
-  }, [cleanup, onTooShort, supported])
+  }, [cleanup, onTooShort, onAutoStop, supported])
 
   /** Stop and resolve with the recording, or null if it was too short. */
   const stop = useCallback((): Promise<Recording | null> => {
@@ -157,7 +159,10 @@ export function useRecorder(onTooShort: () => void) {
     desiredRef.current = false
     const recorder = recorderRef.current
     resolveRef.current = null
-    if (recorder?.state === 'recording') recorder.stop()
+    if (recorder) {
+      recorder.onstop = null
+      if (recorder.state === 'recording') recorder.stop()
+    }
     cleanup()
     setStatus('idle')
   }, [cleanup])

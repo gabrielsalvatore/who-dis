@@ -111,6 +111,17 @@ export function useCall() {
     } catch { /* a deleted call is not an error worth surfacing here */ }
   }, [call])
 
+  const endCall = useCallback(async () => {
+    if (!call || processing) return
+    stopAudio()
+    setError(null)
+    try {
+      setCall(await api.endCall(call.call_id))
+    } catch (e) {
+      setError(String((e as Error).message ?? e))
+    }
+  }, [call, processing, stopAudio])
+
   const submit = useCallback(
     async (payload: { text?: string; audio?: Blob; filename?: string }) => {
       if (!call || processing) return
@@ -205,7 +216,7 @@ export function useCall() {
 
   return {
     health, call, lastResult, processing, processingMs, playing, error, timing,
-    startCall, reset, submit, replay, retryAudio, refresh, stopAudio, setError,
+    startCall, reset, submit, replay, retryAudio, refresh, stopAudio, setError, endCall,
   }
 }
 

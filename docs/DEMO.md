@@ -45,6 +45,15 @@ curl -X POST localhost:8000/api/admin/warm-cache
 
 ## Putting the family view in a judge's hand
 
+For a call-style screen on the caller's phone, open `/phone` or scan **Open the call screen
+on a phone** from the main page. Start the call there and open `/family` on the Mac to watch
+the same call's alerts. Hold the microphone button to speak; **Demo options** includes a
+tap-to-record alternative. The transcript, typed fallback, reply replay, and red hang-up
+button all operate on that session. Hanging up preserves its family-review evidence.
+The browser requires trusted HTTPS for an iPhone microphone; plain HTTP on the LAN works
+with the typed fallback. Keep the prototype label visible and do not describe it as a real
+iPhone phone call. Physical iPhone Safari voice playback still needs a device check.
+
 Under the **Caller simulator** heading there is a collapsed **Watch the family view on a
 phone** control. Open it and it shows a QR code for `http://<your LAN IP>:8000/family`,
 detected from the machine's own default-route interface, plus the URL in text in case the

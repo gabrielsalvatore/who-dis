@@ -101,6 +101,40 @@ def test_unknown_call_id_is_404(client):
     assert send(client, "call-nope", "hi", "r").status_code == 404
 
 
+def test_manual_hangup_preserves_evidence_and_stops_new_turns(client, stub_classifier):
+    call_id = start_call(client)
+    stub_classifier(assessment(risk="needs_review", emergency_claimed=True,
+                               evidence=[ev("caller-1", "I need money now", "emergency_claim")]))
+    assert send(client, call_id, "I need money now, it's an emergency.", "before").status_code == 200
+    before = client.get(f"/api/calls/{call_id}").json()
+    assert before["alerts"]
+    response = client.post(f"/api/calls/{call_id}/end")
+    assert response.status_code == 200
+    ended = response.json()
+    assert ended["status"] == "ended"
+    assert ended["turns"] == before["turns"]
+    assert ended["alerts"] == before["alerts"]
+    assert ended["version"] == before["version"] + 1
+    assert client.get("/api/calls/current").json()["call_id"] == call_id
+    assert client.get("/api/calls/current").json()["status"] == "ended"
+    assert client.post(f"/api/calls/{call_id}/end").json() == ended
+    assert send(client, call_id, "Are you there?", "after").status_code == 409
+
+
+def test_hangup_unknown_call_is_404(client):
+    assert client.post("/api/calls/call-nope/end").status_code == 404
+
+
+def test_phone_route_serves_frontend(client):
+    from app.main import FRONTEND_DIST
+    if not FRONTEND_DIST.is_dir():
+        pytest.skip("Build frontend first to exercise SPA serving")
+    for route in ("/phone", "/phone/"):
+        response = client.get(route)
+        assert response.status_code == 200
+        assert '<div id="root">' in response.text
+
+
 # --------------------------------------------------------------------------
 # degraded + failure handling
 # --------------------------------------------------------------------------

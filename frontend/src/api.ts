@@ -40,6 +40,9 @@ export const getCurrentCall = () =>
 export const deleteCall = (id: string) =>
   fetch(`/api/calls/${id}`, { method: 'DELETE' }).then((r) => r.ok)
 
+export const endCall = (id: string) =>
+  fetch(`/api/calls/${id}/end`, { method: 'POST' }).then(json<CallView>)
+
 export function sendTurn(
   callId: string,
   requestId: string,

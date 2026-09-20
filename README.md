@@ -153,6 +153,14 @@ For frontend development with hot reload, run `npm run dev` in `frontend/` inste
 
 ## Using the demo
 
+- **Phone call screen:** open `/phone` for a mobile call-style interface using the same
+  screening pipeline. Tap **Start call**, hold to talk, and release to send. **Demo options**
+  also has tap-to-record controls, scenario prompts, and explicitly labelled offline replays.
+  **End call** preserves the transcript and family alerts. The main page has a phone-screen
+  link and a LAN QR code. On an iPhone, microphone access requires trusted HTTPS; a plain
+  HTTP LAN link offers typed turns instead. This is a browser call simulation, not a native
+  iPhone call or phone-network integration.
+
 - **Hold the spacebar**, or hold the on-screen **Hold to talk** button, and speak one caller
   turn. Release to send. Taps under half a second are discarded as accidental.
 - **Open family view** opens `/family` in a second window for a second screen. It follows

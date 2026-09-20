@@ -228,6 +228,21 @@ async def delete_call(call_id: str) -> dict:
     return {"deleted": call_id}
 
 
+@app.post("/api/calls/{call_id}/end", response_model=CallView)
+async def end_call(call_id: str) -> CallView:
+    """Hang up without deleting the transcript or family-review evidence."""
+    session = store.get(call_id)
+    if session is None:
+        raise HTTPException(404, "call not found")
+    if session.lock.locked():
+        raise HTTPException(409, "wait for the current turn before ending the call")
+    async with session.lock:
+        if session.status != "ended":
+            session.status = "ended"
+            session.version += 1
+        return mask_call_view(session.to_view())
+
+
 # --------------------------------------------------------------------------
 # the turn pipeline
 # --------------------------------------------------------------------------
@@ -480,5 +495,7 @@ if FRONTEND_DIST.is_dir():
 
     @app.get("/")
     @app.get("/family")
+    @app.get("/phone")
+    @app.get("/phone/")
     async def spa_index() -> FileResponse:
         return FileResponse(FRONTEND_DIST / "index.html")

@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { CallerPanel } from './components/CallerPanel'
 import { FamilyPanel } from './components/FamilyPanel'
+import { PhoneRoute } from './components/PhoneRoute'
 import { useCall, useFamilyFeed } from './useCall'
 
 function Header({ subtitle }: { subtitle: string }) {
@@ -53,5 +54,6 @@ function CallRoute() {
 }
 
 export default function App() {
+  if (/^\/phone\/?$/.test(window.location.pathname)) return <PhoneRoute />
   return window.location.pathname.startsWith('/family') ? <FamilyRoute /> : <CallRoute />
 }
