@@ -28,23 +28,23 @@ as though they were. The prompt has not been tuned against the test set.
 
 ## Development set
 
-`12` conversations · `24` prefixes · dataset `dcd379a81d1` (tuning split — freezing does not apply) · run `2026-09-20T01:00:26.645175+00:00`
+`12` conversations · `24` prefixes · dataset `dcd379a81d1` (tuning split — freezing does not apply) · run `2026-09-20T02:20:52.338993+00:00`
 
-| Metric | kw-v1 | nvidia/nemotron-3-super-120b-a12b / prompt p7ddae94c |
+| Metric | kw-v1 | nvidia/nemotron-3-nano-omni-30b-a3b-reasoning / prompt p7ddae94c |
 |---|---|---|
 | System protective recall on scams | 5/6 (83%) | 6/6 (100%) |
-| Model `high_risk` label recall | 3/6 (50%) | 5/6 (83%) |
+| Model `high_risk` label recall | 3/6 (50%) | 3/6 (50%) |
 | Benign high-risk false alarms | 1/6 (17%) | 0/6 (0%) |
 | Benign calls incorrectly ended | 1/6 (17%) | 0/6 (0%) |
 | Benign calls sent to review | 2/6 (33%) | 3/6 (50%) |
 | Benign handled without review | 4/6 (67%) | 3/6 (50%) |
 | Prefix risk within acceptable set | 21/24 (88%) | 24/24 (100%) |
 | Forbidden-action violations | 1/24 (4%) | 0/24 (0%) |
-| Evidence quotes verified | 13/13 (100%) | 23/23 (100%) |
-| Classify latency median | 0.0 ms | 2071.5 ms |
-| Classify latency p95 | 0.0 ms | 4722.1 ms |
-| Latency sample size | 24 | 24 |
-| Provider failures | 0 | 0 |
+| Evidence quotes verified | 13/13 (100%) | 21/21 (100%) |
+| Classify latency median | 0.0 ms | 2803.2 ms |
+| Classify latency p95 | 0.1 ms | 4208.6 ms |
+| Latency sample size | 24 | 22 |
+| Provider failures | 0 | 2 |
 
 Scams missed entirely: `none`. First protective turn among detected scams (mean): `1.67` — Mean is over DETECTED scams only; missed calls are listed separately.
 
@@ -76,13 +76,46 @@ Two things to be honest about here.
 minutes apart the ranking inverted — one model went 7/8 then 4/8, another 5/8 then
 6/8. These are shared endpoints under hackathon load and `503 ResourceExhausted` is
 common. No model choice fixes that, which is why the system retries once, then falls
-back to a second Nemotron, then degrades to review. A fallback fired during the dev
-run and recovered the turn.
+back to a second Nemotron, then degrades to review. Two turns of the latest dev run
+hit a 503; both degraded to review, which is the intended behaviour and is counted
+in the table above rather than excluded from it.
 
 **Latency is the stable signal**, and it drove the model choice together with dev-set
 accuracy. Reasoning mode is explicitly disabled (`enable_thinking: false`); the
 endpoint returned no `reasoning_content` under that setting, and output is capped at
 260 tokens with temperature 0, because every extra token is user-visible delay.
+
+## Which Nemotron is primary, and why
+
+Primary is `nemotron-3-nano-omni-30b-a3b-reasoning`. `nemotron-3-super-120b-a12b` is
+the fallback, called only after the primary returns a transient failure.
+
+The two models differ most on the metric this project argues is not load-bearing.
+super-120b labels more scam prefixes `high_risk` (5/6 against nano's 3/6), and system
+protective recall is 6/6 on both. The policy ends or escalates the same calls either
+way, because it acts on a re-verified credential-bearing quote rather than on the
+label. Better label recall bought nothing the family would ever see.
+
+The swap to super-120b looked like it cost benign precision: benign calls sent to the
+family for review went 1/6 to 3/6. **That number did not reproduce.** Rerunning nano on
+the same twelve conversations also put 3/6 benign calls into review, and one of those
+three was a provider 503 degrading to review rather than anything the model decided.
+Two runs of the same model on the same data giving 1/6 and 3/6 is the measurement
+moving, not the model. With six benign conversations, one conversation is 17 points, so
+this split cannot separate the two models on benign precision and that comparison
+should not be quoted as though it can.
+
+Tail latency is the one user-visible difference, and it is weak. nano was faster on
+both dev runs (p95 3424 ms and 4209 ms against 4722 ms), while the point-in-time
+endpoint sweep above had super-120b the faster of the two. Shared hosted endpoints
+under load are not stable enough for that gap to be decisive either.
+
+So the ordering is a weak preference, not a result: nano is primary on the dev-run
+latency tail, super-120b is the fallback that covers transient failures, and neither
+position rests on label recall. The fallback chain matters more than which model is
+first in it. False family alerts are the failure mode worth spending effort on, because
+alert fatigue is what makes a family stop reading the alerts, but this evaluation is
+not powered to measure them at the resolution a model choice would need.
 
 ## The keyword baseline
 
