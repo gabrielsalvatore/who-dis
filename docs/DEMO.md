@@ -31,6 +31,18 @@ curl -s localhost:8000/api/health                     # setup_needs must be []
 `--host 0.0.0.0` is what makes the phone handoff below work. Without it uvicorn only
 listens on loopback and nothing else on the network can reach it.
 
+**Warm the cache on the machine that will present, every time the backend restarts.** The
+fixed-phrase audio cache is keyed by the exact phrase text and lives on disk, so a reboot,
+an accidental Ctrl-C, presenting from the other laptop, or any edit to a fixed phrase in
+`backend/app/policy.py` all turn the opening line into a live ElevenLabs call, measured at
+5.4 s cold. That delay lands on the first thing a judge hears, and an ElevenLabs judge is
+the one most likely to notice. Check it, do not assume it:
+
+```bash
+ls backend/app/audio_cache/*.mp3 | wc -l     # expect 13, not 0
+curl -X POST localhost:8000/api/admin/warm-cache
+```
+
 ## Putting the family view in a judge's hand
 
 Under the **Caller simulator** heading there is a collapsed **Watch the family view on a
