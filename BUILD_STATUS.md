@@ -2,8 +2,11 @@
 
 Progress log for WhoDis. Newest entry last. Purpose: resume work after a context reset.
 
-Deadline note: build started 2026-09-19 ~16:50 local, ~17 h budget → feature freeze target
-2026-09-20 ~06:50, submission by ~09:50. **Reconfirm the real SteelHacks XIII deadline.**
+Deadline note: submissions close **2026-09-20 11:00 EDT**, per steelhacks.org/schedule read
+at 08:55 EDT that morning. Not confirmed with the organisers directly, so treat 11:00 as
+hard and do not plan into it. The earlier ~09:50 figure in this note was an assumption from
+the ~17 h build budget, not a published time. The remaining hours have to cover the demo
+video and the Devpost writeup, not only code.
 
 ---
 
