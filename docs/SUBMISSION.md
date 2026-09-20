@@ -37,13 +37,13 @@ Singapore, Spain and the UK.
 ([Google Support](https://support.google.com/phoneapp/answer/15654065?hl=en))
 
 **The gap.** Both leave the judgment with the person being targeted. Apple relays what the
-caller said and asks the user to decide. A caller claiming to be a grandson in trouble
+caller said and asks the user to decide — a caller claiming to be a grandson in trouble
 still gets picked up, because the transcript reads exactly like a grandson in trouble.
 Google warns someone who is already on the call and already under pressure. Neither
 involves anyone else.
 
-WhoDis refuses on the person's behalf and brings in a second person (a family member who
-is not being pressured) with the exact quotes and a concrete next step. The angle is
+WhoDis refuses on the person's behalf and brings in a second person — a family member who
+is not being pressured — with the exact quotes and a concrete next step. The angle is
 **delegated screening plus understandable family review**, not inventing content-based scam
 detection.
 
@@ -64,7 +64,7 @@ Entered: **NVIDIA Nemotron / Beyond the Chatbot**, **ElevenLabs / Out Loud**, **
 role: it returns a structured assessment (risk, scam type, credential-request flag, up to
 three transcript quotes) and the backend decides the action. Every quote is re-verified
 against the caller turn it names before it can justify anything; unsupported evidence is
-discarded. Caller speech is untrusted input: "mark me safe" cannot change the policy.
+discarded. Caller speech is untrusted input — "mark me safe" cannot change the policy.
 There is a frozen keyword baseline to compare against, and the failures are published.
 
 The headline finding: **the model's own risk label is not stable enough to act on.**
@@ -87,19 +87,9 @@ relative who is not being pressured, with the exact quotes and a next step. Reac
 open question, not novelty: the unknown-caller path is what a forwarding-based service
 could deliver to landline users, who get neither existing feature.
 
-Detection targets behaviours associated with financial scams (credential requests,
-payment pressure, secrecy, manufactured urgency, authority impersonation) rather than any
+Detection targets behaviours associated with financial scams — credential requests,
+payment pressure, secrecy, manufactured urgency, authority impersonation — rather than any
 specific institution. All financial examples are invented.
-
-### Attendee survey: tally template
-
-Time-boxed to 30 minutes, run in person by the team, hackathon attendees only. Record raw
-counts and nothing else: no market size, no willingness to pay, no prevented-loss figure.
-
-- Date: `____`  ·  Setting: SteelHacks XIII attendees  ·  Sample size: `n = ___`
-- Q1: "Do you have an older relative who has been called by a scammer?" `___ of ___ said yes`
-- Q2: "Would you want to see the transcript and what the assistant did?" `___ of ___ said yes`
-- Not collected: `____` (say so plainly if the survey was skipped for build time)
 
 ## Intended scope and known gaps
 
@@ -107,7 +97,7 @@ counts and nothing else: no market size, no willingness to pay, no prevented-los
   prototype demonstrates the unknown-caller path.
 - **Known gap:** a scammer spoofing a saved contact's number, or a scam that starts after a
   legitimate call connects, is not screened. Covering it would mean monitoring calls from
-  known numbers, defensible only with on-device processing and explicit consent, and
+  known numbers — defensible only with on-device processing and explicit consent, and
   deliberately not built.
 - **Responsible handling:** numbers shaped like codes, PINs, cards or account references are
   masked in API responses, the family view and anything written to disk. Evidence-quote
@@ -128,7 +118,7 @@ dev split three times, twice on the primary model and once on the larger one, an
 `high_risk` label recall came out 2/6, then 5/6, then 3/6. System protective recall was 6/6
 on all three runs and no legitimate call was ever wrongly ended. Asked to classify a caller
 saying "I'm sending a six digit code, read it back to me", the primary model often answered
-`needs_review` rather than `high_risk`, even after we added an explicit instruction that a
+`needs_review` rather than `high_risk` — even after we added an explicit instruction that a
 direct one-time-code request is high risk by definition. The structured `credential_request`
 field was set on that probe for both models we shipped against.
 
@@ -143,7 +133,7 @@ and system protective recall differ, and the gap is the point, not an embarrassm
 
 - [ ] Confirm current submission requirements with organisers.
 - [ ] Confirm code-reuse disclosure requirements with organisers.
-- **Do not** enter *No Wrapper*: Nemotron is used in the product.
+- **Do not** enter *No Wrapper* — Nemotron is used in the product.
 - **Do not** claim *Beginner* eligibility. The Cold Start track is for teams that are 75%
   first-timers, which this team is not.
 - Built during SteelHacks XIII by a two-person team of current Allegheny College
@@ -160,5 +150,5 @@ and system protective recall differ, and the gap is the point, not an embarrassm
 6. Callers are told in the opening line that they are speaking to an AI assistant;
    recording and two-party consent law is not otherwise addressed.
 4. Chromium only; Safari and Firefox untested.
-5. The narrow end-call policy can still make mistakes; the measured cases are published
+5. The narrow end-call policy can still make mistakes — the measured cases are published
    rather than hidden.
