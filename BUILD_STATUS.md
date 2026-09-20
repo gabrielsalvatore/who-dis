@@ -89,8 +89,12 @@ All three required scenarios verified against the running server:
   every turn. Fixed with per-call headline de-duplication; the refusal still stands.
 
 ### Known issues / honest notes
-- Hosted-endpoint latency is highly variable: observed 0.9 s – 14.3 s for one classify.
-  Mitigations: filler phrase, one retry, fallback model. Not solvable from our side.
+- Hosted-endpoint latency is variable. After the timeout work, the primary model over
+  three dev runs: median 2.4–2.8 s, p95 3.2–4.2 s, worst 6.0 s for one classify (n=70
+  successful classifications). An attempt is cut at 8 s; attempt + retry + fallback model
+  share a 12 s budget, then the turn degrades to family review. Mitigations: filler
+  phrase, one retry, fallback model, hard budget. The variance itself is not solvable
+  from our side. (The earlier 0.9 s – 14.3 s figure predates the timeout work.)
 - The 20-word quote limit is a prompt hint the model sometimes ignores on long turns.
 - `CREDENTIAL_TERMS` is a support guard, **not** a negation detector: the phrase
   "we will never ask you to read out a one time code" matches it. Safety comes from the

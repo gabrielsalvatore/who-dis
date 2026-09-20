@@ -31,7 +31,7 @@ from .schemas import (
 
 # --- fixed assistant phrases. The backend picks one; nothing is generated. ---
 OPENING_LINE = (
-    "Hello, this is a call screening assistant answering on behalf of this household. "
+    "Hello, this is an AI call screening assistant answering on behalf of this household. "
     "May I ask who's calling and what it's about?"
 )
 DECLINE_CREDENTIAL = (

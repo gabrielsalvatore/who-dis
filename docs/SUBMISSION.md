@@ -58,6 +58,8 @@ impersonation without needing to detect it.
 
 ## Track fit
 
+Entered: **NVIDIA Nemotron / Beyond the Chatbot**, **ElevenLabs / Out Loud**, **Seed Round**.
+
 **NVIDIA Nemotron / Beyond the Chatbot.** Nemotron has a functional, non-conversational
 role: it returns a structured assessment (risk, scam type, credential-request flag, up to
 three transcript quotes) and the backend decides the action. Every quote is re-verified
@@ -76,9 +78,27 @@ labelled fallback. Why voice: scams happen on phone calls, and the people most t
 will not open an app while a scammer is pressuring them, so the protection has to live on
 the call itself.
 
-**PNC / Compound.** The detection targets behaviours associated with financial scams —
-credential requests, payment pressure, secrecy, manufactured urgency, authority
-impersonation — rather than any specific institution. All financial examples are invented.
+**Seed Round.** The wedge is delegated screening *plus* family review, not content-based
+scam detection, which two major platforms already ship. Apple relays what the caller said
+and asks the target to decide; Google warns someone already on the call. Both leave the
+judgment with the person under pressure. WhoDis refuses on their behalf and brings in a
+relative who is not being pressured, with the exact quotes and a next step. Reach is the
+open question, not novelty: the unknown-caller path is what a forwarding-based service
+could deliver to landline users, who get neither existing feature.
+
+Detection targets behaviours associated with financial scams — credential requests,
+payment pressure, secrecy, manufactured urgency, authority impersonation — rather than any
+specific institution. All financial examples are invented.
+
+### Attendee survey — tally template
+
+Time-boxed to 30 minutes, run in person by the team, hackathon attendees only. Record raw
+counts and nothing else: no market size, no willingness to pay, no prevented-loss figure.
+
+- Date: `____`  ·  Setting: SteelHacks XIII attendees  ·  Sample size: `n = ___`
+- Q1 — "Do you have an older relative who has been called by a scammer?" — `___ of ___ said yes`
+- Q2 — "Would you want to see the transcript and what the assistant did?" — `___ of ___ said yes`
+- Not collected: `____` (say so plainly if the survey was skipped for build time)
 
 ## Intended scope and known gaps
 
@@ -131,7 +151,11 @@ and system protective recall differ, and the gap is the point, not an embarrassm
 
 1. Synthetic scenarios only; no claim about real-world prevention accuracy.
 2. Turn-based browser prototype, not telephony.
-3. Hosted-endpoint latency is variable (0.9 s – 14.3 s observed for one classification).
+3. Hosted-endpoint latency is variable: median 2.4–2.8 s, p95 3.2–4.2 s, worst observed
+   6.0 s for one classification (n=70, primary model, dev runs). An attempt is cut off
+   at 8 s and the whole chain at 12 s, after which the call degrades to family review.
+6. Callers are told in the opening line that they are speaking to an AI assistant;
+   recording and two-party consent law is not otherwise addressed.
 4. Chromium only; Safari and Firefox untested.
 5. The narrow end-call policy can still make mistakes — the measured cases are published
    rather than hidden.
