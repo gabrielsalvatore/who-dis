@@ -95,6 +95,76 @@ def test_credential_flag_with_an_unrelated_verified_quote_cannot_end_the_call():
     assert decision.action == "request_family_review"
 
 
+def test_quoted_demand_to_recite_a_code_ends_the_call():
+    """The model usually quotes the demand, not the noun.
+
+    dev-01 caller-2 is the real case: the turn plainly names a six digit code,
+    but the quote the model returned was only "please read it out to me now".
+    The guard runs on the quote, so this used to fall through to review.
+    """
+    turns = [caller("caller-1",
+                    "I've sent a six digit code to your mobile, "
+                    "please read it out to me now.")]
+    a = assessment(risk="needs_review", credential_request=True,
+                   evidence=verify_evidence(
+                       [ev("caller-1", "please read it out to me now")], turns))
+    assert supporting_credential_quote(a) is not None
+    decision, alert = decide(a, CallState(), turns[-1])
+    assert decision.action == "end_simulated_call"
+    assert decision.ends_call
+    assert alert is not None and alert.level == "urgent"
+
+
+def test_common_demand_phrasings_all_reach_the_end_call_policy():
+    phrasings = [
+        "just tell me the code",
+        "give me the code now",
+        "repeat it back to me",
+        "read that back to me",
+        "what's the code",
+    ]
+    for phrase in phrasings:
+        turns = [caller("caller-1", f"Right, {phrase}.")]
+        a = assessment(risk="needs_review", credential_request=True,
+                       evidence=verify_evidence([ev("caller-1", phrase)], turns))
+        assert supporting_credential_quote(a) is not None, phrase
+        decision, _ = decide(a, CallState(), turns[-1])
+        assert decision.action == "end_simulated_call", phrase
+
+
+def test_review_reason_distinguishes_a_missed_guard_from_no_credential_request():
+    """The family panel must not be told there was no credential request when there was."""
+    turns = [caller("caller-1", "I'm calling from the card services department.")]
+    flagged = assessment(risk="high_risk", credential_request=True,
+                         evidence=verify_evidence(
+                             [ev("caller-1", "I'm calling from the card services department",
+                                 "authority_impersonation")], turns))
+    decision, _ = decide(flagged, CallState(), turns[-1])
+    assert decision.action == "request_family_review"
+    assert "flagged a credential request" in decision.reason
+    assert "no verified credential request" not in decision.reason
+
+    not_flagged = assessment(risk="high_risk", credential_request=False,
+                             evidence=verify_evidence(
+                                 [ev("caller-1", "I'm calling from the card services department",
+                                     "authority_impersonation")], turns))
+    decision, _ = decide(not_flagged, CallState(), turns[-1])
+    assert decision.action == "request_family_review"
+    assert "did not flag a credential request" in decision.reason
+
+
+def test_a_demand_for_something_that_is_not_a_credential_still_cannot_end_the_call():
+    """Widening the guard must not turn any imperative into grounds for hanging up."""
+    for phrase in ["give me the address", "tell me the name of your bank",
+                   "send me the paperwork"]:
+        turns = [caller("caller-1", f"Could you {phrase}?")]
+        a = assessment(risk="high_risk", credential_request=True,
+                       evidence=verify_evidence([ev("caller-1", phrase)], turns))
+        assert supporting_credential_quote(a) is None, phrase
+        decision, _ = decide(a, CallState(), turns[-1])
+        assert decision.action == "request_family_review", phrase
+
+
 # --------------------------------------------------------------------------
 # emergencies, degraded, follow-ups
 # --------------------------------------------------------------------------

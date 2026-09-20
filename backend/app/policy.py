@@ -99,10 +99,17 @@ SEVERE_SIGNALS = re.compile(
     re.IGNORECASE,
 )
 
-# Published, frozen lexical guard for the end-call policy. A verified quote must
-# actually mention a credential before CallKind will hang up on it. This exists
-# so that `credential_request=True` with an unrelated supporting quote downgrades
-# to review instead of terminating a call.
+# Published lexical guard for the end-call policy. A verified quote must either
+# name a credential or be an unambiguous demand to recite one before CallKind
+# will hang up on it. This exists so that `credential_request=True` with an
+# unrelated supporting quote downgrades to review instead of terminating a call.
+#
+# The demand phrasings are here because the guard runs on the model's chosen
+# quote, not on the whole caller turn, and the model usually quotes the demand
+# ("read it out to me now") rather than the noun ("six digit code"). Without
+# them a correctly classified, correctly verified OTP request fell through to
+# review. Deliberately a short allow-list: a phrasing it misses goes to a person,
+# never to safe.
 CREDENTIAL_TERMS = re.compile(
     r"\b(one[\s-]?time\s+(?:code|password|pin)|"
     r"otp|passcode|pass\s?word|password|"
@@ -110,7 +117,9 @@ CREDENTIAL_TERMS = re.compile(
     r"(?:verification|security|login|log[\s-]?in|authentication|confirmation|access)\s+code|"
     r"code\s+(?:we|i|they)\s+(?:just\s+)?(?:sent|texted|messaged)|"
     r"(?:six|6|four|4|five|5|eight|8)[\s-]?digit\s+(?:code|number|pin)|"
-    r"read\s+(?:it|the\s+code)\s+back)\b",
+    r"(?:read|repeat)\s+(?:it|them|that|the\s+(?:code|number|numbers|digits))\s+(?:back|out)|"
+    r"(?:tell|give|send|say)\s+me\s+the\s+(?:code|number|numbers|digits|pin)|"
+    r"what(?:'s| is)\s+the\s+code)\b",
     re.IGNORECASE,
 )
 
@@ -259,8 +268,17 @@ def decide(
         decision = PolicyDecision(
             action="request_family_review",
             assistant_text=REVIEW_URGENT if assessment.emergency_claimed else REVIEW_GENERAL,
-            reason="Model reported high risk; no verified credential request, so the call "
-                   "is sent for review rather than ended.",
+            reason=(
+                # These two cases are not the same thing, and telling the family
+                # the first one when the second happened is a false statement in
+                # the one panel that cannot contain one.
+                "Model reported high risk and flagged a credential request, but no "
+                "verified quote named a credential, so the call is sent for review "
+                "rather than ended."
+                if assessment.credential_request else
+                "Model reported high risk; it did not flag a credential request, so "
+                "the call is sent for review rather than ended."
+            ),
             ends_call=False,
             alert_level="urgent",
         )
