@@ -242,3 +242,62 @@ def test_unverified_severe_signal_does_not_escalate():
     decision, alert = decide(a, CallState(), turns[-1])
     assert decision.action == "continue"
     assert alert is None
+
+
+# --------------------------------------------------------------------------
+# callback verification: CallKind never verifies identity, it routes verification
+# --------------------------------------------------------------------------
+def test_emergency_alert_tells_the_family_how_to_verify():
+    turns = [caller("caller-1", "Grandma it's Tom, I need bail money right now.")]
+    a = assessment(risk="needs_review", emergency_claimed=True,
+                   evidence=verify_evidence(
+                       [ev("caller-1", "I need bail money right now", "emergency_claim")], turns))
+    _, alert = decide(a, CallState(), turns[-1])
+    assert alert is not None
+    assert alert.recommended_action is not None
+    assert "number you already have" in alert.recommended_action
+
+
+def test_emergency_reply_never_implies_the_caller_will_be_connected():
+    from app.policy import REVIEW_URGENT
+    lowered = REVIEW_URGENT.lower()
+    for implies_connection in ("put you through", "connect you", "transfer", "hold on"):
+        assert implies_connection not in lowered
+    assert "number they already have" in lowered
+
+
+def test_impersonation_alert_carries_callback_advice():
+    turns = [caller("caller-1", "This is the fraud team, read me the verification code.")]
+    a = assessment(risk="high_risk", credential_request=True,
+                   scam_type="bank_impersonation",
+                   evidence=verify_evidence(
+                       [ev("caller-1", "read me the verification code")], turns))
+    decision, alert = decide(a, CallState(), turns[-1])
+    assert decision.action == "end_simulated_call"
+    assert alert is not None and alert.recommended_action is not None
+
+
+def test_ordinary_call_without_an_identity_claim_gets_no_callback_advice():
+    """Don't attach scary advice to every alert; it stops meaning anything."""
+    turns = [caller("caller-1", "Could you send a payment for the invoice today.")]
+    a = assessment(risk="needs_review",
+                   evidence=verify_evidence(
+                       [ev("caller-1", "send a payment for the invoice today",
+                           "payment_pressure")], turns))
+    _, alert = decide(a, CallState(), turns[-1])
+    assert alert is not None
+    assert alert.recommended_action is None
+
+
+def test_no_assistant_template_asks_the_caller_for_a_credential():
+    """A caller must never be prompted for a code by our own fixed phrases."""
+    from app.policy import CACHEABLE_PHRASES
+    banned = ("code", "password", "pin", "card number", "account number", "passcode")
+    for name, text in CACHEABLE_PHRASES.items():
+        low = text.lower()
+        for word in banned:
+            if word in low:
+                # Only permitted while refusing to share one.
+                assert "not able to share" in low or "never" in low, (
+                    f"phrase {name!r} mentions {word!r} outside a refusal: {text!r}"
+                )

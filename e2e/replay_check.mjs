@@ -3,7 +3,7 @@ import { chromium } from 'playwright'
 const browser = await chromium.launch({ channel: 'chromium', headless: true,
   args: ['--autoplay-policy=no-user-gesture-required'] })
 const page = await browser.newPage()
-await page.goto('http://localhost:8000', { waitUntil: 'networkidle' })
+await page.goto(`${process.env.CK_BASE ?? 'http://localhost:8000'}`, { waitUntil: 'networkidle' })
 
 await page.locator('.replay-controls summary').click()
 const note = await page.locator('.replay-controls .fine').textContent()

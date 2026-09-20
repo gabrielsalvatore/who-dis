@@ -4,10 +4,17 @@ import type { CallView, Health, TurnResult } from './types'
 
 /** Delay before the filler starts. If the pipeline beats this, the filler is skipped. */
 const FILLER_DELAY_MS = 250
+/**
+ * A second cached phrase for the long tail. Hosted-endpoint p95 is ~4.5 s and the
+ * worst observed single classification was 14 s; one "One moment." does not cover
+ * that, and silence on a phone call reads as a dropped line.
+ */
+const SECOND_FILLER_DELAY_MS = 4000
 
 export interface TurnTiming {
-  timeToFillerMs: number | null   // null when the filler was skipped
-  timeToResponseMs: number        // wall time until the assistant's real answer
+  timeToFillerMs: number | null        // null when the filler was skipped
+  timeToSecondFillerMs: number | null  // null when the second filler was not needed
+  timeToResponseMs: number             // wall time until the assistant's real answer
 }
 
 function newRequestId() {
@@ -26,10 +33,19 @@ export function useCall() {
 
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const fillerTimerRef = useRef<number | null>(null)
+  const secondFillerTimerRef = useRef<number | null>(null)
+  const respondedRef = useRef(false)
   const tickRef = useRef<number | null>(null)
 
   useEffect(() => {
     api.getHealth().then(setHealth).catch((e) => setError(String(e.message ?? e)))
+  }, [])
+
+  const clearFillerTimers = useCallback(() => {
+    if (fillerTimerRef.current) window.clearTimeout(fillerTimerRef.current)
+    if (secondFillerTimerRef.current) window.clearTimeout(secondFillerTimerRef.current)
+    fillerTimerRef.current = null
+    secondFillerTimerRef.current = null
   }, [])
 
   const stopAudio = useCallback(() => {
@@ -105,41 +121,54 @@ export function useCall() {
 
       const t0 = performance.now()
       let fillerAt: number | null = null
+      let secondFillerAt: number | null = null
       let fillerPlayback: Promise<void> = Promise.resolve()
+      respondedRef.current = false
 
       tickRef.current = window.setInterval(
         () => setProcessingMs(performance.now() - t0),
         100,
       )
 
-      // The filler covers provider latency. It is a cached fixed phrase and says
-      // nothing about the outcome, so it can start before any decision exists.
+      // Fillers cover provider latency. Both are cached fixed phrases that say
+      // nothing about the outcome, so they can play before any decision exists.
+      // They are queued rather than overlapped, so we never talk over ourselves.
       if (health?.speech_configured) {
         fillerTimerRef.current = window.setTimeout(() => {
           fillerAt = performance.now() - t0
-          fillerPlayback = playClip('/api/audio/phrase/filler')
+          fillerPlayback = fillerPlayback.then(() => playClip('/api/audio/phrase/filler'))
         }, FILLER_DELAY_MS)
+
+        secondFillerTimerRef.current = window.setTimeout(() => {
+          if (respondedRef.current) return
+          secondFillerAt = performance.now() - t0
+          fillerPlayback = fillerPlayback.then(() =>
+            respondedRef.current
+              ? Promise.resolve()
+              : playClip('/api/audio/phrase/filler_second'),
+          )
+        }, SECOND_FILLER_DELAY_MS)
       }
 
       try {
         const result = await api.sendTurn(call.call_id, newRequestId(), payload)
         const responseAt = performance.now() - t0
+        respondedRef.current = true
 
-        if (fillerTimerRef.current) {
-          window.clearTimeout(fillerTimerRef.current)
-          fillerTimerRef.current = null
-        }
+        clearFillerTimers()
         setLastResult(result)
-        setTiming({ timeToFillerMs: fillerAt, timeToResponseMs: responseAt })
+        setTiming({
+          timeToFillerMs: fillerAt,
+          timeToSecondFillerMs: secondFillerAt,
+          timeToResponseMs: responseAt,
+        })
         await api.getCall(call.call_id).then(setCall).catch(() => undefined)
 
         await fillerPlayback            // never talk over the filler
         if (result.audio_url) await playClip(result.audio_url)
       } catch (e) {
-        if (fillerTimerRef.current) {
-          window.clearTimeout(fillerTimerRef.current)
-          fillerTimerRef.current = null
-        }
+        respondedRef.current = true
+        clearFillerTimers()
         setError(String((e as Error).message ?? e))
         await refresh()
       } finally {
@@ -149,7 +178,7 @@ export function useCall() {
         setProcessingMs(0)
       }
     },
-    [call, processing, health, playClip, refresh],
+    [call, processing, health, playClip, refresh, clearFillerTimers],
   )
 
   const replay = useCallback(async () => {
@@ -170,9 +199,9 @@ export function useCall() {
   }, [call, lastResult, playClip])
 
   useEffect(() => () => {
-    if (fillerTimerRef.current) window.clearTimeout(fillerTimerRef.current)
+    clearFillerTimers()
     if (tickRef.current) window.clearInterval(tickRef.current)
-  }, [])
+  }, [clearFillerTimers])
 
   return {
     health, call, lastResult, processing, processingMs, playing, error, timing,

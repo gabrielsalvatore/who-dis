@@ -48,7 +48,13 @@ class Settings:
         self.max_upload_bytes: int = 8 * 1024 * 1024       # 8 MB audio upload cap
         self.max_transcript_chars: int = 1200              # per caller turn
         self.max_turns_per_call: int = 24
-        self.classify_timeout_s: float = 12.0
+        # Per-attempt timeout. Measured p95 on the dev set is ~4.6 s, so 8 s is
+        # generous for a healthy endpoint and short enough that a hung request
+        # does not become a silent demo.
+        self.classify_timeout_s: float = 8.0
+        # Hard ceiling across the original attempt, the retry and the fallback
+        # model. Once this is gone, degrade rather than keep trying.
+        self.classify_total_budget_s: float = 12.0
         self.stt_timeout_s: float = 30.0
         self.tts_timeout_s: float = 20.0
 

@@ -1,0 +1,55 @@
+{
+  "measured_at": "2026-09-20T01:03:48.232151+00:00",
+  "timeout_s": 8.0,
+  "note": "Point-in-time measurement of shared hosted endpoints under hackathon load.",
+  "models": {
+    "nvidia/nemotron-3-super-120b-a12b": {
+      "attempts": 8,
+      "succeeded": 4,
+      "errors": {
+        "HTTP503": 4
+      },
+      "p50_ms": 1615.9,
+      "p95_ms": 1950.4,
+      "max_ms": 2617.8,
+      "risk_labels": [
+        "high_risk"
+      ],
+      "credential_request_values": [
+        "True"
+      ]
+    },
+    "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning": {
+      "attempts": 8,
+      "succeeded": 6,
+      "errors": {
+        "HTTP503": 2
+      },
+      "p50_ms": 2785.9,
+      "p95_ms": 3034.3,
+      "max_ms": 3930.5,
+      "risk_labels": [
+        "needs_review"
+      ],
+      "credential_request_values": [
+        "True"
+      ]
+    },
+    "nvidia/nemotron-3.5-lightning-30b-a3b": {
+      "attempts": 8,
+      "succeeded": 5,
+      "errors": {
+        "ReadTimeout": 3
+      },
+      "p50_ms": 3190.4,
+      "p95_ms": 3267.9,
+      "max_ms": 3377.8,
+      "risk_labels": [
+        "needs_review"
+      ],
+      "credential_request_values": [
+        "False"
+      ]
+    }
+  }
+}

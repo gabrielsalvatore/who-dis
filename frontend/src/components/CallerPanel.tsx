@@ -260,6 +260,10 @@ export function CallerPanel({ ctl }: { ctl: ReturnType<typeof useCall> }) {
               `classify ${Math.round(lastResult.assessment.latency_ms)}ms`}
             {timing && ` · time to filler ${
               timing.timeToFillerMs == null ? 'skipped' : `${Math.round(timing.timeToFillerMs)}ms`
+            }${
+              timing.timeToSecondFillerMs == null
+                ? ''
+                : ` · 2nd filler ${Math.round(timing.timeToSecondFillerMs)}ms`
             } · time to response ${Math.round(timing.timeToResponseMs)}ms`}
             {lastResult.assessment.used_fallback_model && ' · fallback model used'}
           </p>

@@ -18,6 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
 from . import classifier, fixtures, providers
+from .masking import mask_call_view, mask_turn_result
 from .config import get_settings
 from .policy import CACHEABLE_PHRASES, CallState, advance_state, decide
 from .schemas import (
@@ -142,11 +143,11 @@ async def create_call(payload: Optional[dict] = None) -> CallView:
                                replay_scenario=replay_scenario)
         logger.info("call created %s mode=fixture_replay scenario=%s",
                     session.call_id, replay_scenario)
-        return session.to_view()
+        return mask_call_view(session.to_view())
 
     session = store.create(mode="live_api", scenario_label=payload.get("scenario_label"))
     logger.info("call created %s mode=live_api", session.call_id)
-    return session.to_view()
+    return mask_call_view(session.to_view())
 
 
 @app.get("/api/replays")
@@ -174,7 +175,7 @@ async def get_call(call_id: str) -> CallView:
     session = store.get(call_id)
     if session is None:
         raise HTTPException(404, "call not found")
-    return session.to_view()
+    return mask_call_view(session.to_view())
 
 
 @app.delete("/api/calls/{call_id}")
@@ -237,6 +238,7 @@ async def submit_turn(
             result = _replay_turn(session, request_id)
             timings.total_ms = (time.perf_counter() - t_start) * 1000
             result.timings = timings
+            result = mask_turn_result(result)
             session.cache_result(request_id, result)
             return result
 
@@ -324,6 +326,9 @@ async def submit_turn(
             audio_cached=audio_cached,
             timings=timings,
         )
+        # Masked before it is cached, so a replayed request returns exactly what
+        # the first one did.
+        result = mask_turn_result(result)
         session.cache_result(request_id, result)
         logger.info(
             "turn %s/%s risk=%s action=%s classify=%sms total=%sms",

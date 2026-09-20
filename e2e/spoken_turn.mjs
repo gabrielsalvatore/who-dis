@@ -17,7 +17,7 @@ const here = path.dirname(fileURLToPath(import.meta.url))
 const fixture = process.argv[2] ?? 'otp_request'
 const holdMs = Number(process.argv[3] ?? 13) * 1000
 const wav = path.resolve(here, '..', 'eval', 'audio_fixtures', `${fixture}.wav`)
-const BASE = 'http://localhost:8000'
+const BASE = process.env.CK_BASE ?? 'http://localhost:8000'
 
 const log = (...a) => console.log(...a)
 

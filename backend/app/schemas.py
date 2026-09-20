@@ -115,6 +115,9 @@ class Alert(BaseModel):
     created_at: float = Field(default_factory=time.time)
     model_risk: Optional[Risk] = None
     policy_action: Optional[Action] = None
+    # Callback-verification advice, set when the caller claimed an identity.
+    # CallKind never verifies identity itself; it tells the family how to.
+    recommended_action: Optional[str] = None
 
 
 class StageTimings(BaseModel):

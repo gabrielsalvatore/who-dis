@@ -248,17 +248,19 @@ async def classify(
     if not settings.classifier_configured:
         return degraded("classifier_not_configured")
 
-    result = await _classify_with(settings.nvidia_model, turns, settings, client)
+    started = time.perf_counter()
+    result = await _classify_with(settings.nvidia_model, turns, settings, client, started)
     transient = result.status == "degraded" and (
         result.degraded_reason or ""
     ).startswith(("provider_http_429", "provider_http_5", "provider_timeout"))
-    if transient and settings.nvidia_model_fallback:
+    budget_left = settings.classify_total_budget_s - (time.perf_counter() - started)
+    if transient and settings.nvidia_model_fallback and budget_left > 1.0:
         logger.warning(
             "primary model %s unavailable (%s); trying fallback %s",
             settings.nvidia_model, result.degraded_reason, settings.nvidia_model_fallback,
         )
         fallback = await _classify_with(
-            settings.nvidia_model_fallback, turns, settings, client
+            settings.nvidia_model_fallback, turns, settings, client, started
         )
         if fallback.status == "ok":
             fallback.used_fallback_model = True
@@ -271,8 +273,10 @@ async def _classify_with(
     turns: list[Turn],
     settings: Settings,
     client: httpx.AsyncClient,
+    started: float | None = None,
 ) -> Assessment:
     """One bounded classification against one model. At most one retry."""
+    started = started if started is not None else time.perf_counter()
     body = {
         "model": model,
         "messages": [
@@ -324,6 +328,10 @@ async def _classify_with(
             if resp.status_code not in (429, 500, 502, 503, 504):
                 break
 
+        # Never spend the whole call budget on retries.
+        if time.perf_counter() - started > settings.classify_total_budget_s:
+            last_error = f"{last_error}_budget_exhausted"
+            break
         if attempt == 0:
             continue
     return degraded(last_error, model, (time.perf_counter() - t0) * 1000)

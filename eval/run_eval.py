@@ -189,6 +189,8 @@ async def main() -> int:
     ap.add_argument("--system", choices=["nemotron", "keyword", "both"], default="both")
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--yes", action="store_true", help="skip the inference-cost prompt")
+    ap.add_argument("--model", default=None,
+                    help="override NVIDIA_MODEL for this run (model comparison)")
     args = ap.parse_args()
 
     convs = load(args.split)
@@ -203,6 +205,9 @@ async def main() -> int:
 
     systems = ["keyword", "nemotron"] if args.system == "both" else [args.system]
     settings = get_settings()
+    if args.model:
+        settings.nvidia_model = args.model
+        settings.nvidia_model_fallback = ""   # isolate the model under test
 
     if "nemotron" in systems:
         if not settings.classifier_configured:

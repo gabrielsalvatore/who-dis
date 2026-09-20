@@ -54,6 +54,7 @@ export interface Alert {
   created_at: number
   model_risk: Risk | null
   policy_action: Action | null
+  recommended_action: string | null
 }
 
 export interface StageTimings {

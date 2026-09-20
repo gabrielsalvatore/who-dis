@@ -4,9 +4,17 @@
 
 ```bash
 cd backend && ../.venv/bin/python -m uvicorn app.main:app --port 8000
-curl -X POST localhost:8000/api/admin/warm-cache      # once; then it is instant
+../.venv/bin/python backend/scripts/warm_cache.py     # once; then it is instant
 curl -s localhost:8000/api/health                     # setup_needs must be []
 ```
+
+**Run one warm-up turn immediately before you present.** Cold hosted endpoints are slower,
+and the first classification of a session is routinely the slowest. Start a call, send one
+typed turn, then hit **Restart call**. It costs ten seconds and removes the worst outlier
+from your actual demo.
+
+**Have the offline replay open in a second tab** before you start, so the fallback is one
+click away rather than something you go looking for under pressure.
 
 - Open <http://localhost:8000>, click **Open family view**, drag that window so judges see
   it. Angle it toward them — the point is that *someone other than the person on the call*
@@ -61,8 +69,13 @@ it won't authenticate him either. It hands it to a person."
 
 **5. Close (10s).** Use these, in this order:
 
-- *"Google warns the person already on the call. CallKind answers so the vulnerable person
-  never talks to the scammer, and gives the family the evidence."*
+- *"Phones can already screen callers — an iPhone will answer an unknown number and ask
+  who's calling. But it hands the transcript back to the person scammers are targeting and
+  asks them to decide. CallKind makes that call for them, and brings in the family with the
+  evidence."*
+- The measured finding, in one line: *"The model's own risk label was right 5 times out of
+  6 on our dev set. We don't trust it anyway — the only thing that can end a call is a quote
+  we re-checked against the transcript."*
 - The measured numbers from `docs/EVALUATION.md` — with denominators, out loud.
 - One limitation. Suggested: *"This is a browser prototype, not a phone integration, and
   every scenario is synthetic. We can't claim a real-world prevention rate."*

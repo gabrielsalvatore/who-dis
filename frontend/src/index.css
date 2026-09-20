@@ -209,3 +209,11 @@ mark { background: #ffe08a; color: var(--ink); padding: 1px 2px; border-radius: 
 .replay-controls { margin-top: 12px; border-top: 1px dashed var(--line); padding-top: 10px; }
 .replay-controls summary { cursor: pointer; font-size: .85rem; color: var(--ink-faint); }
 .replay-controls .row { margin-top: 8px; }
+
+.alert-advice {
+  background: rgba(255, 255, 255, .8); border: 1px solid rgba(0, 0, 0, .1);
+  border-left: 3px solid currentColor; border-radius: 8px;
+  padding: 8px 10px; font-size: .9rem; margin: 0 0 10px;
+}
+
+.masking-note { margin: -4px 0 8px; }

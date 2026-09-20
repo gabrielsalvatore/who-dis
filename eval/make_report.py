@@ -7,9 +7,14 @@ from __future__ import annotations
 
 import glob
 import json
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "backend"))
+
+from app.classifier import MAX_OUTPUT_TOKENS  # noqa: E402
+
 PROTECTIVE = {"end_simulated_call", "request_family_review"}
 
 
@@ -95,6 +100,22 @@ lines = [
     "",
 ]
 
+ver = json.loads((ROOT / "eval" / "dataset_versions.json").read_text())
+if not ver.get("frozen"):
+    lines += [
+        "## Status of the held-out test set",
+        "",
+        "**The test set has not been frozen and has not been run.** The build spec requires a",
+        "human to review all 24 drafted conversations and their per-prefix labels before the",
+        "set is frozen. That review is incomplete: two flagged judgement calls were confirmed",
+        "(both as drafted, 0 labels changed), but the full 24 were not signed off.",
+        "",
+        "So every number below is from the **development split**, which is the split tuning was",
+        "allowed against. Dev-set numbers are not held-out numbers and should not be presented",
+        "as though they were. The prompt has not been tuned against the test set.",
+        "",
+    ]
+
 for split, heading in (("dev", "Development set"), ("test", "Held-out test set")):
     run = latest(split)
     lines += [f"## {heading}", ""]
@@ -125,6 +146,42 @@ for split, heading in (("dev", "Development set"), ("test", "Held-out test set")
         f = failures(run, system)
         if f:
             lines += [f"### Failure cases — {system}", ""] + f
+
+sweep_path = ROOT / "eval" / "results" / "endpoint_sweep.json"
+if sweep_path.exists():
+    sw = json.loads(sweep_path.read_text())
+    lines += [
+        "## Hosted-endpoint reliability and model selection",
+        "",
+        f"Measured {sw['measured_at']} with a {sw['timeout_s']:.0f} s timeout. "
+        f"{sw['note']}",
+        "",
+        "| Model | succeeded | p50 | p95 | errors |",
+        "|---|---|---|---|---|",
+    ]
+    for model, m in sw["models"].items():
+        lines.append(
+            f"| `{model.replace('nvidia/', '')}` | {m['succeeded']}/{m['attempts']} | "
+            f"{m['p50_ms']} ms | {m['p95_ms']} ms | {m['errors'] or 'none'} |"
+        )
+    lines += [
+        "",
+        "Two things to be honest about here.",
+        "",
+        "**Availability is noisy and is not a stable differentiator.** Across two sweeps taken",
+        "minutes apart the ranking inverted — one model went 7/8 then 4/8, another 5/8 then",
+        "6/8. These are shared endpoints under hackathon load and `503 ResourceExhausted` is",
+        "common. No model choice fixes that, which is why the system retries once, then falls",
+        "back to a second Nemotron, then degrades to review. A fallback fired during the dev",
+        "run and recovered the turn.",
+        "",
+        "**Latency is the stable signal**, and it drove the model choice together with dev-set",
+        "accuracy. Reasoning mode is explicitly disabled (`enable_thinking: false`); the",
+        "endpoint returned no `reasoning_content` under that setting, and output is capped at",
+        f"{MAX_OUTPUT_TOKENS} tokens with temperature 0, because every extra token is "
+        "user-visible delay.",
+        "",
+    ]
 
 lines += [
     "## The keyword baseline",

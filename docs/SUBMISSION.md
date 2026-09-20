@@ -2,8 +2,9 @@
 
 ## One-liner
 
-CallKind screens suspicious conversations and gives a trusted family member the evidence to
-review.
+Phones can already screen callers, but they still leave the final decision to the person
+scammers target. CallKind makes that call for them and brings in the family with the
+evidence.
 
 ## What was built
 
@@ -14,15 +15,46 @@ the exact quotes that caused concern, and the action taken. Local only, one proc
 **Not** a phone-network integration, not continuous live-call monitoring, no call
 forwarding, no identity verification. All scenarios are synthetic.
 
-## Differentiation
+## How this differs from existing tools
 
-Google already ships live scam detection on calls. The difference in one sentence:
+Two major platforms already ship call-screening features. Both are genuinely good, and
+"we answer the phone for you" is **not** a differentiator on its own.
 
-> Google warns the person already on the call; CallKind answers so the vulnerable person
-> never talks to the scammer, and gives the family the evidence.
+**Apple Call Screening.** iPhone automatically answers calls from numbers that aren't
+saved in your contacts, asks the caller for their name and reason for calling, then rings
+and shares the caller's response so you can decide whether to pick up. It is configured
+under Phone → Screen Unknown Callers (*Never* / *Ask Reason for Calling* / *Silence*).
+Calls are not screened while roaming, and screening turns off for 24 hours after a call to
+emergency services.
+([Apple Support](https://support.apple.com/en-us/111106))
 
-The angle is **delegated screening plus understandable family review**, not inventing
-content-based scam detection.
+**Google Scam Detection.** Runs on-device during a call and alerts the user with a
+notification, sound and vibration when it judges a high scam likelihood; the user then
+dismisses the alert or ends the call themselves. It does not answer calls. It is **off by
+default** and must be opted into. Available on Pixel 6 and later in the US, and Pixel 9 and
+later in Australia, Canada, France, Germany, India, Ireland, Italy, Japan, Mexico,
+Singapore, Spain and the UK.
+([Google Support](https://support.google.com/phoneapp/answer/15654065?hl=en))
+
+**The gap.** Both leave the judgment with the person being targeted. Apple relays what the
+caller said and asks the user to decide — a caller claiming to be a grandson in trouble
+still gets picked up, because the transcript reads exactly like a grandson in trouble.
+Google warns someone who is already on the call and already under pressure. Neither
+involves anyone else.
+
+CallKind refuses on the person's behalf and brings in a second person — a family member who
+is not being pressured — with the exact quotes and a concrete next step. The angle is
+**delegated screening plus understandable family review**, not inventing content-based scam
+detection.
+
+Worth noting in the pitch, not in the build: many older adults still use landlines, which
+get neither feature. A forwarding-based service could reach them. Not implemented here.
+
+**CallKind never trusts an unverified identity.** It does not attempt to detect every
+impersonation. It never connects an unverified caller, never claims anyone was verified,
+and every alert about a claimed identity tells the family to call that person or
+organisation back on a number they already have. Callback verification defeats
+impersonation without needing to detect it.
 
 ## Track fit
 
@@ -48,10 +80,41 @@ the call itself.
 credential requests, payment pressure, secrecy, manufactured urgency, authority
 impersonation — rather than any specific institution. All financial examples are invented.
 
+## Intended scope and known gaps
+
+- **Production scope:** screen **unknown numbers only**; saved contacts ring through. The
+  prototype demonstrates the unknown-caller path.
+- **Known gap:** a scammer spoofing a saved contact's number, or a scam that starts after a
+  legitimate call connects, is not screened. Covering it would mean monitoring calls from
+  known numbers — defensible only with on-device processing and explicit consent, and
+  deliberately not built.
+- **Responsible handling:** numbers shaped like codes, PINs, cards or account references are
+  masked in API responses, the family view and anything written to disk. Evidence-quote
+  validation runs on the raw in-memory transcript first, so masking never weakens the
+  evidence check.
+
 ## Measured results
 
 See `docs/EVALUATION.md`. Report counts and denominators, never bare percentages, and never
 present fixture replay as a model result.
+
+### The finding worth leading with
+
+The NVIDIA track asks for a failure you found. This is ours, and it shaped the architecture:
+
+**On every hosted Nemotron model we tested, the structured `credential_request` field is
+markedly more reliable than the free-text `risk` label.** Asked to classify a caller saying
+"I'm sending a six digit code, read it back to me", the models frequently answered
+`needs_review` rather than `high_risk` — even after we added an explicit instruction that a
+direct one-time-code request is high risk by definition. The structured field was correct
+5/5 across credential phrasings on the model we shipped first.
+
+So the only policy that ends a call requires three things, none of which is the risk label:
+`credential_request` set, **plus** a quote that re-matches the caller turn it names, **plus**
+that quote actually naming a credential. A confident wrong label cannot hang up on anyone.
+
+This is why `docs/EVALUATION.md` reports two recall numbers. Model `high_risk` label recall
+and system protective recall differ, and the gap is the point, not an embarrassment.
 
 ## Attendee survey (to be filled in by Gabriel, not by Claude Code)
 

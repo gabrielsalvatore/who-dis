@@ -40,7 +40,7 @@ DECLINE_CREDENTIAL = (
 )
 REVIEW_URGENT = (
     "I can't confirm who you are, and I'm not able to act on an urgent request for money. "
-    "I'm flagging this call for the family to review right away."
+    "I'll let the family know right away, and they'll reach out on a number they already have."
 )
 REVIEW_GENERAL = (
     "I'm not able to help with that directly. I'll pass this on for the family to review."
@@ -61,6 +61,9 @@ CALL_LIMIT_CLOSE = (
 # Every fixed phrase that gets spoken, so TTS can be pre-cached once per voice.
 CACHEABLE_PHRASES: dict[str, str] = {
     "filler": "One moment.",
+    # Played only if a turn is still processing after a few seconds. Like the
+    # first filler it is a cached fixed phrase and says nothing about the outcome.
+    "filler_second": "Still checking, thanks for your patience.",
     "opening": OPENING_LINE,
     "decline_credential": DECLINE_CREDENTIAL,
     "review_urgent": REVIEW_URGENT,
@@ -73,6 +76,17 @@ CACHEABLE_PHRASES: dict[str, str] = {
 }
 
 MAX_FOLLOWUPS = 2
+
+# Callback verification. The single most useful thing to tell a worried relative,
+# and the one step that defeats impersonation without CallKind having to detect it:
+# never trust the number that rang you.
+CALLBACK_ADVICE = (
+    "Don't call back the number that rang. If you want to check this, call the person or "
+    "organisation yourself on a number you already have."
+)
+
+# Signals that mean the caller asserted an identity worth verifying independently.
+IDENTITY_CLAIM_SIGNALS = re.compile(r"impersonation|emergency|authority|family", re.IGNORECASE)
 
 # Signals that warrant telling a person now rather than after two more polite
 # questions. Measured on the dev set: without this, a caller who demands a wire
@@ -150,6 +164,17 @@ def supporting_credential_quote(assessment: Assessment) -> Evidence | None:
     return None
 
 
+def _claims_an_identity(assessment: Assessment) -> bool:
+    """Did the caller assert who they are, in a way worth checking independently?"""
+    if assessment.emergency_claimed:
+        return True
+    if "impersonation" in (assessment.scam_type or ""):
+        return True
+    return any(
+        IDENTITY_CLAIM_SIGNALS.search(ev.signal) for ev in assessment.verified_evidence
+    )
+
+
 def _alert(
     level: str,
     headline: str,
@@ -166,6 +191,7 @@ def _alert(
         caller_turn_id=caller_turn_id,
         model_risk=assessment.risk,
         policy_action=action,  # type: ignore[arg-type]
+        recommended_action=CALLBACK_ADVICE if _claims_an_identity(assessment) else None,
     )
 
 

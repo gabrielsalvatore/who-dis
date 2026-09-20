@@ -85,6 +85,11 @@ function AlertCard({ alert }: { alert: Alert }) {
           ))}
         </ul>
       )}
+      {alert.recommended_action && (
+        <p className="alert-advice">
+          <strong>What to do:</strong> {alert.recommended_action}
+        </p>
+      )}
       <footer className="alert-foot">
         <span>Model said: <strong>{alert.model_risk ? RISK_LABEL[alert.model_risk] : 'n/a'}</strong></span>
         <span>CallKind did: <strong>{alert.policy_action ? ACTION_LABEL[alert.policy_action] : 'n/a'}</strong></span>
@@ -229,6 +234,9 @@ export function FamilyPanel({
           )}
 
           <h3 className="transcript-head">Transcript</h3>
+          <p className="fine masking-note">
+            Numbers that look like codes, PINs or account details are masked.
+          </p>
           <ul className="transcript">
             {call.turns.map((t) => (
               <TurnRow
@@ -239,8 +247,10 @@ export function FamilyPanel({
             ))}
           </ul>
           <p className="disclaimer">
-            CallKind never confirms a caller's identity. "No warning signs" means nothing
-            alarming was said, not that the caller is who they claim to be.
+            CallKind never confirms a caller's identity and never connects an unverified
+            caller. "No warning signs" means nothing alarming was said, not that the caller
+            is who they claim to be. To check who someone is, call them back on a number you
+            already have.
           </p>
         </>
       )}

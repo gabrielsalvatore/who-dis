@@ -218,3 +218,86 @@ Asked about the two genuine judgement calls in the draft test labels:
 - test-21 (no-pressure charity call): confirmed calm *or* review both acceptable.
 **Labels changed: 0.** Full 24-conversation review still outstanding; test set remains
 `frozen: false` and has NOT been run.
+
+## M4 — product-review recommendations (2026-09-20 ~01:10)
+
+~4.5 h elapsed of the 17 h budget, so all six priorities were in scope.
+
+### Priority 1 — latency (done)
+- **Reasoning mode was already off and verified off.** `enable_thinking: false` is sent and
+  the endpoint returns no `reasoning_content` under it. `max_tokens` 260, temperature 0.
+  Nothing was set blindly; a probe compared omitted / false / true.
+- **Measured three Nemotron endpoints** (`eval/measure_endpoints.py`, output committed to
+  `eval/results/endpoint_sweep.json`). Switched primary
+  `nano-omni-30b` → **`nemotron-3-super-120b-a12b`**, fallback → `nano-omni-30b`.
+  Dropped `3.5-lightning` from the chain entirely: 3/8 available with five read timeouts.
+- Dev p50/p95, n=24: `nano-omni` 2465 / 3424 ms → `super-120b` **2072 / 4722 ms**, and
+  model `high_risk` recall 2/6 → **5/6**, protective recall 6/6 in both.
+  **Honest cost:** benign calls sent to review went 1/6 → 3/6. Recorded in the report.
+- **Second-stage filler** `filler_second` ("Still checking, thanks for your patience.")
+  plays at 4 s if a turn is still running, queued behind the first so we never talk over
+  ourselves. Verified firing in-browser on a real 6.3 s classification.
+- **Hard bounds**: per-attempt timeout 12 s → **8 s**, plus a new
+  `classify_total_budget_s = 12 s` ceiling across the original attempt, the retry and the
+  fallback model. 10 new tests in `backend/tests/test_classifier.py` drive the real
+  `classify()` against a stubbed transport: timeout, 503-then-success, fallback,
+  both-models-down, budget exhaustion, non-transient 401, and garbage output.
+- `docs/DEMO.md`: warm-up turn before presenting, replay open in a second tab.
+
+### Priority 2 — competitor framing (done, with three factual corrections)
+New pitch line applied to `README.md`, `docs/SUBMISSION.md`, `docs/DEMO.md`. I verified the
+competitor claims against primary sources rather than restating them, and **three did not
+hold up**:
+- *"Samsung Galaxy S26 series"* — **not in Google's support documentation.** Dropped.
+  Google lists Pixel 6+ (US) and Pixel 9+ across 13 other countries.
+- *"Google does not apply to calls with contacts"* — **not stated** in the docs. Dropped.
+- *"Apple: iOS 26, iPhone 11 and later, off by default"* — **not verifiable** from Apple's
+  own pages. Dropped the version/model/default claims; described the behaviour instead.
+- Also softened *"shows a live transcript"* to Apple's own wording: the iPhone "rings and
+  shares their response". Apple *does* confirm screening applies only to numbers not saved
+  in contacts.
+- Also corrected: Google Scam Detection is **not US-only**.
+
+### Priority 3 — never trust an unverified identity (done)
+- `Alert.recommended_action` carries callback-verification advice, attached only when the
+  caller actually claimed an identity (emergency, impersonation, authority, family). A test
+  asserts an ordinary payment request gets **no** advice — advice on every alert stops
+  meaning anything.
+- `REVIEW_URGENT` rewritten so it cannot imply connection: "I'll let the family know right
+  away, and they'll reach out on a number they already have." Test asserts no
+  "put you through" / "connect you" / "transfer" / "hold on" in it.
+- New test walks every cached phrase and fails if any asks a caller for a credential
+  outside a refusal.
+- Docs updated in README and SUBMISSION.
+
+### Priority 4 — masking (done)
+`backend/app/masking.py`, applied at the output boundary only: API responses, family view,
+replayed turns, and the request-id cache. Raw text stays in memory so evidence-quote
+validation is unaffected — a test asserts a quote is `verified: true` while both the quote
+and the transcript come back masked, and that a masked quote still matches inside its
+masked turn so highlighting survives. Two regex bugs found and fixed while testing: a code
+at the end of a sentence was not masked (the decimal guard also caught full stops), and a
+spaced card number masked as four tokens instead of one. Negative tests keep `10:30`, `$20`,
+`house number 42`, `2026`, `15%`, `1.2345` and `12/25/2026` intact.
+
+### Priorities 5 and 6 — documentation (done)
+Production scope (unknown numbers only), the spoofed-known-contact gap and why it is
+deliberately not built, and the `credential_request` finding with counts, now lead
+`docs/SUBMISSION.md` and appear in the demo close.
+
+### Declined / corrected
+1. **"The frozen test set."** The test set is **not frozen and has not been run** — the
+   24-conversation review was never completed. I did not freeze it, did not run it, and
+   `docs/EVALUATION.md` now opens by stating this plainly rather than implying a held-out
+   result exists. Every published number is dev-split.
+2. **Availability as the model-selection justification.** My first sweep showed super-120b
+   7/8 vs nano 5/8. A second sweep minutes later inverted it (4/8 vs 6/8). Availability is
+   too noisy to justify a choice; the switch rests on latency and dev accuracy, and the
+   report says so. The fallback chain is the real mitigation.
+
+### Known cosmetic issue
+A call that claims an emergency and then escalates raises two urgent alert cards with
+identical "What to do" advice. Both are genuine distinct findings, so the alerts are not
+wrong, just repetitive. Left as-is.
+
+60 backend tests passing. Frontend typecheck and production build clean.

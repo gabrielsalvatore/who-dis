@@ -22,6 +22,7 @@ backend/app/audio_cache/*.json
 
 # eval output
 eval/results/*.json
+!eval/results/endpoint_sweep.json
 eval/results/*.md
 !eval/results/.gitkeep
 

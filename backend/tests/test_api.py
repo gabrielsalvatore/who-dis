@@ -277,3 +277,72 @@ def test_replay_rejects_turns_past_the_end_of_the_recording(client):
             break
     assert 200 in codes
     assert codes[-1] == 409          # ran out of script, or the call ended
+
+
+# --------------------------------------------------------------------------
+# masking at the output boundary
+# --------------------------------------------------------------------------
+def test_codes_are_masked_in_responses_but_validation_used_raw_text(client, stub_classifier):
+    """The quote is still verified against the RAW turn, then masked on the way out."""
+    call_id = start_call(client)
+    stub_classifier(assessment(
+        risk="high_risk", credential_request=True,
+        evidence=[ev("caller-1", "the code is 483920")]))
+    body = send(client, call_id, "Read it back, the code is 483920.", "req-1").json()
+
+    assert "483920" not in body["caller_text"]
+    assert "number masked" in body["caller_text"]
+    quote = body["assessment"]["evidence"][0]
+    assert "483920" not in quote["quote"]
+    assert quote["verified"] is True          # verified against raw text, before masking
+
+    view = client.get(f"/api/calls/{call_id}").json()
+    assert "483920" not in json_dump(view)
+
+
+def json_dump(obj) -> str:
+    import json
+    return json.dumps(obj)
+
+
+def test_card_and_ssn_shaped_numbers_are_masked(client, stub_classifier):
+    call_id = start_call(client)
+    stub_classifier(assessment(risk="needs_review"))
+    body = send(client, call_id,
+                "My card is 4539 1488 0343 6467 and my ssn is 123-45-6789.", "req-1").json()
+    assert "4539" not in body["caller_text"]
+    assert "123-45-6789" not in body["caller_text"]
+
+
+def test_ordinary_numbers_survive_masking(client, stub_classifier):
+    """Over-masking would make the transcript useless to the family."""
+    call_id = start_call(client)
+    stub_classifier(assessment(risk="no_warning_signs"))
+    text = "I'll come by at 10:30, it's house number 42, and the fee is $20."
+    body = send(client, call_id, text, "req-1").json()
+    assert "10:30" in body["caller_text"]
+    assert "42" in body["caller_text"]
+    assert "$20" in body["caller_text"]
+    assert "number masked" not in body["caller_text"]
+
+
+def test_masking_is_consistent_between_quote_and_transcript(client, stub_classifier):
+    """A masked quote must still be findable inside the masked turn, or the
+    family view cannot highlight it."""
+    call_id = start_call(client)
+    stub_classifier(assessment(
+        risk="high_risk", credential_request=True,
+        evidence=[ev("caller-1", "read me the code 998877")]))
+    send(client, call_id, "Please read me the code 998877 now.", "req-1")
+    view = client.get(f"/api/calls/{call_id}").json()
+    caller_turn = next(t for t in view["turns"] if t["role"] == "caller")
+    quote = view["assessments"][0]["evidence"][0]["quote"]
+    assert quote.lower() in caller_turn["text"].lower()
+
+
+def test_a_spaced_card_number_masks_as_one_token(client, stub_classifier):
+    """Four masks in a row is unreadable; the family has to be able to read this."""
+    call_id = start_call(client)
+    stub_classifier(assessment(risk="needs_review"))
+    body = send(client, call_id, "My card is 4539 1488 0343 6467.", "req-1").json()
+    assert body["caller_text"].count("number masked") == 1
